@@ -1,214 +1,180 @@
 package  highgui
 
-//#include <opencv/highgui.h>
-import "C"
-import "unsafe"
+/*
+#include <opencv/highgui.h>
+*/
+//import "C"
+import "os"
+import "image"
+import "io"
 
-//=========================================================================
+/****************************************************************************************\
+*                                  Basic GUI functions                                   *
+\****************************************************************************************/
 
-// 读图象
-func (img *Image)Load(name string) int {
-	img.cptr = C.cvLoadImage(C.CString(name), C.int(1));
-	return 1;
+// 初始化系统
+func InitSystem(args []string) {
+  // CVAPI(int) cvInitSystem( int argc, char** argv );
 }
-// 保存图像
-func (img *Image)Save(name string) {
-	C.cvSaveImage(C.CString(name), unsafe.Pointer(img.cptr));
-}
-
-//=========================================================================
-
-type Window struct {
-	name	string
-	isInit	bool
+// 启动窗口线程
+func StartWindowThread()(err os.Error) {
+	return nil
 }
 
-// 新建窗口
-
-func (win *Window)Create(winName string) {
-	if !win.isInit {
-		C.cvNamedWindow(C.CString(win.name), 1);
-		win.isInit = true;
-	}
+// 命名窗口
+func NamedWindow(name string, autoSize bool)(err os.Error) {
+ 	return nil
 }
 
-// 销毁窗口
-
-func (win *Window)Destroy() {
-	if win.isInit {
-		C.cvDestroyWindow(C.CString(win.name));
-		win.isInit = false;
-	}
+// 设置窗口属性
+func SetWindowProperty(name string, prop_id int, prop_value float)(err os.Error) {
+	return nil
+}
+// 查询窗口属性
+func GetWindowProperty(name string, prop_id int)(prop_value float, err os.Error) {
+	return
 }
 
-// 销毁所有窗口
-
-func DestroyAllWindows() {
-	C.cvDestroyAllWindows();
+// 显式图像
+func ShowImage(name string, image image.Image)(err os.Error) {
+	return
 }
 
 // 调整窗口大小
-
-func (win *Window)Resize(width, height int){
-	if win.isInit {
-		C.cvResizeWindow(C.CString(win.name), C.int(width), C.int(height));
-	}
+func ResizeWindow(name string, width, height int)(err os.Error) {
+	return
 }
-
 // 移动窗口
-
-func (win *Window)Move(x, y int) {
-	if win.isInit {
-		C.cvMoveWindow(C.CString(win.name), C.int(x), C.int(y));
-	}
-}
-
-// 获取窗口名字
-
-func (win *Window)Name() string {
-	return win.name;
-}
-
-// 创建窗口
-
-func (win *Window)NamedWindow() {
-	C.cvNamedWindow(C.CString(win.name), 1);
+func MoveWindow(name string, x, y int)(err os.Error) {
+	return
 }
 
 // 销毁窗口
-
-func (win *Window)DestroyWindow() {
-	C.cvDestroyWindow(C.CString(win.name));
+func DestroyWindow(name string)(err os.Error) {
+	return
 }
-
-// 显示图形
-
-func (win *Window)ShowImage(img *Image) {
-	C.cvShowImage(C.CString(win.name), unsafe.Pointer(img.cptr));
-}
-
-
-// 消息循环
-
-func WaitKey(key int) {
-	C.cvWaitKey(C.int(key));
-}
-
-
-//=========================================================================
-
-type Capture struct {
-	cptr	*C.CvCapture
-}
-
-// 打开视频文件
-func (cap *Capture)OpenFile(name string) {
-	if cap.cptr != nil { cap.Release(); }
-	cap.cptr = C.cvCreateFileCapture(C.CString(name));
-}
-
-// 打开摄像头
-func (cap *Capture)OpenCamera(index int) {
-	if cap.cptr != nil { cap.Release(); }
-	cap.cptr = C.cvCreateCameraCapture(C.int(index));
-}
-
-// 关闭视频
-func (cap *Capture)Release() {
-	if cap.cptr != nil {
-		C.cvReleaseCapture(&cap.cptr);
-	}
-}
-
-// 抓取图象
-func (cap *Capture)QueryFrame() *Image {
-	return &Image{ cptr: C.cvQueryFrame(cap.cptr) }
-}
-//=========================================================================
-
-
-
-/*
-CV_EXTERN_C_FUNCPTR( void (*CvTrackbarCallback)(int pos) );
-
-int cvCreateTrackbar( const char* trackbar_name, const char* window_name,
-                      int* value, int count, CvTrackbarCallback on_change );
-*/
-
-// 创建脱动条
-
-func (win *Window)CreateTrackbar(trackbar_name string) {
-	//
-}
-
-/*
-cvGetTrackbarPos
-
-Retrieves trackbar position
-
-int cvGetTrackbarPos( const char* trackbar_name, const char* window_name );
-
-trackbar_name
-    Name of trackbar. 
-window_name
-    Name of the window which is the parent of trackbar. 
-
-The function cvGetTrackbarPos returns the ciurrent position of the specified trackbar.
-cvSetTrackbarPos
-
-Sets trackbar position
-
-void cvSetTrackbarPos( const char* trackbar_name, const char* window_name, int pos );
-
-trackbar_name
-    Name of trackbar. 
-window_name
-    Name of the window which is the parent of trackbar. 
-pos
-    New position. 
-
-The function cvSetTrackbarPos sets the position of the specified trackbar.
-
-*/
-
-
-// 鼠标回调函数
-
-/*
-cvSetMouseCallback
-
-Assigns callback for mouse events
-
-#define CV_EVENT_MOUSEMOVE      0
-#define CV_EVENT_LBUTTONDOWN    1
-#define CV_EVENT_RBUTTONDOWN    2
-#define CV_EVENT_MBUTTONDOWN    3
-#define CV_EVENT_LBUTTONUP      4
-#define CV_EVENT_RBUTTONUP      5
-#define CV_EVENT_MBUTTONUP      6
-#define CV_EVENT_LBUTTONDBLCLK  7
-#define CV_EVENT_RBUTTONDBLCLK  8
-#define CV_EVENT_MBUTTONDBLCLK  9
-
-#define CV_EVENT_FLAG_LBUTTON   1
-#define CV_EVENT_FLAG_RBUTTON   2
-#define CV_EVENT_FLAG_MBUTTON   4
-#define CV_EVENT_FLAG_CTRLKEY   8
-#define CV_EVENT_FLAG_SHIFTKEY  16
-#define CV_EVENT_FLAG_ALTKEY    32
-
-CV_EXTERN_C_FUNCPTR( void (*CvMouseCallback )(int event, int x, int y, int flags, void* param) );
-
-void cvSetMouseCallback( const char* window_name, CvMouseCallback on_mouse, void* param=NULL );
-
-*/
-
-
-
-
-func init() {
-	// init 
+// 销毁全部窗口
+func DestroyAllWindows() {
 }
 
 //=========================================================================
+// 拖动条
+type TrackbarCallback interface {
+	OnChange(trackbar_name, window_name string, value, maxValue int)
+}
+
+// 创建拖动条
+func CreateTrackbar(barName, winName string, value, maxValue int, callback TrackbarCallback)(err os.Error) {
+	return
+}
+
+// 查询拖动条位置
+func GetTrackbarPos(barName, winName string)(value int, err os.Error) {
+	return
+}
+// 设置脱动条位置
+func SetTrackbarPos(barName, winName string, pos int)(err os.Error) {
+	return
+}
+
+// 窗口回调
+type MouseCallback interface {
+	OnMove(event, x, y, flags int)
+}
+
+//=========================================================================
+
+// 读图像
+func LoadImage(name string)(img image.Image, err os.Error) {
+	return
+}
+
+// 保存图像
+func SaveImage(name string, img image.Image)(err os.Error) {
+	return
+}
+
+// 解码图像
+func DecodeImage(r io.Reader)(img image.Image, err os.Error) {
+	return
+}
+// 编码图像
+func EncodeImage(w io.Writer, img image.Image)(err os.Error) {
+	return
+}
+
+// 转换图像
+func ConvertImage(src, dst image.Image)(err os.Error) {
+	return
+}
+                      
+/****************************************************************************************\
+*                         Working with Video Files and Cameras                           *
+\****************************************************************************************/
+
+// 模仿图片，构造一个视频接口
+
+// 视频接口
+type Video interface {
+	Size()(width, height int)
+	GrabFrame()(img image.Image, err os.Error)
+}
+
+type CvCapture struct {
+	a int
+}
+
+// 打开是否文件
+func CreateFileCapture(name string)(cap CvCapture, err os.Error) {
+	return
+}
+
+// 打开相机文件
+func CreateCameraCapture(index int)(cap CvCapture, err os.Error) {
+	return
+}
+
+// 获取一帧图像
+func (cap *CvCapture)GrabFrame()(err os.Error) {
+	return
+}
+
+// 获取之前抓取的帧
+func RetrieveFrame()(img image.Image, err os.Error) {
+	return
+}
+// 获取一帧图像
+func (cap *CvCapture)QueryFrame()(img image.Image, err os.Error) {
+	return
+}
+
+// 释放图像
+func ReleaseCapture(){
+}
+
+// 属性
+func GetCaptureProperty() {
+}
+func SetCaptureProperty() {
+}
+
+func GetCaptureDomain() {
+}
+//=========================================================================
+
+// 创建写视频
+func CreateVideoWriter() {
+}
+
+// 写一帧
+func WriteFrame() {
+}
+
+// 关闭
+func ReleaseVideoWriter() {
+} 
+
+//=========================================================================
+
+
 

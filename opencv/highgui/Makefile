@@ -9,9 +9,10 @@ TARG=opencv/highgui
 # Can have plain GOFILES too, but this example doesn't.
 
 CGOFILES=\
-	cv.go highgui.go
+	cv.go 
+	#highgui.go 
 
-GOFILES=doc.go
+GOFILES=doc.go highgui.go 
 
 CGO_LDFLAGS=-lcv -lcxcore -lhighgui
 
