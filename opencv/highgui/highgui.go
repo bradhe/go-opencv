@@ -14,6 +14,8 @@ import "io"
 
 // 初始化系统
 func InitSystem(args []string) {
+	cvWaitKey(20)
+	//C.cvWaitKey(C.int(0))
   // CVAPI(int) cvInitSystem( int argc, char** argv );
 }
 // 启动窗口线程
@@ -82,6 +84,11 @@ type MouseCallback interface {
 	OnMove(event, x, y, flags int)
 }
 
+// 消息循环
+func WaitKey(ms int) {
+	cvWaitKey(ms)
+}
+
 //=========================================================================
 
 // 读图像
@@ -114,11 +121,6 @@ func ConvertImage(src, dst image.Image)(err os.Error) {
 
 // 模仿图片，构造一个视频接口
 
-// 视频接口
-type Video interface {
-	Size()(width, height int)
-	GrabFrame()(img image.Image, err os.Error)
-}
 
 type CvCapture struct {
 	a int

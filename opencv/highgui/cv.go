@@ -159,7 +159,7 @@ func (win *Window)ShowImage(img *Image) {
 
 // 消息循环
 
-func WaitKey(key int) {
+func WaitKey2a(key int) {
 	C.cvWaitKey(C.int(key));
 }
 
