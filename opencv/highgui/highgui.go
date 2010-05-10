@@ -14,18 +14,16 @@ import "io"
 
 // 初始化系统
 func InitSystem(args []string) {
-	cvWaitKey(20)
-	//C.cvWaitKey(C.int(0))
-  // CVAPI(int) cvInitSystem( int argc, char** argv );
+	cvInitSystem(args)
 }
 // 启动窗口线程
 func StartWindowThread()(err os.Error) {
-	return nil
+	return cvStartWindowThread()
 }
 
 // 命名窗口
 func NamedWindow(name string, autoSize bool)(err os.Error) {
- 	return nil
+ 	return cvNamedWindow(name, autoSize)
 }
 
 // 设置窗口属性
