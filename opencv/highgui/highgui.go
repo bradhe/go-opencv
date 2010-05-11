@@ -8,6 +8,35 @@ import "os"
 import "image"
 import "io"
 
+//=============================================================================
+
+// An RGBA is an in-memory image backed by a 2-D slice of RGBAColor values.
+type IplImage struct {
+	// The Pixel field's indices are y first, then x, so that At(x, y) == Pixel[y][x].
+	Pixel [][]image.RGBAColor
+}
+
+func (p *IplImage) ColorModel() image.ColorModel { return image.NRGBAColorModel }
+
+func (p *IplImage) Width() int {
+	if len(p.Pixel) == 0 {
+		return 0
+	}
+	return len(p.Pixel[0])
+}
+
+func (p *IplImage) Height() int { return len(p.Pixel) }
+
+func (p *IplImage) At(x, y int) image.Color { return p.Pixel[y][x] }
+
+//func (p *IplImage) Set(x, y int, c image.Color) { p.Pixel[y][x] = toRGBAColor(c).(RGBAColor) }
+
+// NewRGBA returns a new RGBA with the given width and height.
+func NewIplImage(w, h int) *IplImage {
+
+	return &IplImage{}
+}
+
 /****************************************************************************************\
 *                                  Basic GUI functions                                   *
 \****************************************************************************************/

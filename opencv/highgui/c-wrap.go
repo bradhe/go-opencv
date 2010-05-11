@@ -295,9 +295,32 @@ func cvShowImage(name string, image image.Image)(err os.Error) {
 		}
 	}
 
+	C.cvShowImage(C.CString(name), unsafe.Pointer(pIplImage))
 	C.cvReleaseImage(&pIplImage)
 	return
 }
+
+// 调整窗口大小
+func cvResizeWindow(name string, width, height int)(err os.Error) {
+	C.cvResizeWindow(C.CString(name), C.int(width), C.int(height))
+	return
+}
+// 移动窗口
+func cvMoveWindow(name string, x, y int)(err os.Error) {
+	C.cvMoveWindow(C.CString(name), C.int(x), C.int(y))
+	return
+}
+
+// 销毁窗口
+func cvDestroyWindow(name string)(err os.Error) {
+	C.cvDestroyWindow(C.CString(name))
+	return
+}
+// 销毁全部窗口
+func cvDestroyAllWindows() {
+	C.cvDestroyAllWindows()
+}
+
 func cvWaitKey(key int) {
 	C.cvWaitKey(C.int(key))
 }
