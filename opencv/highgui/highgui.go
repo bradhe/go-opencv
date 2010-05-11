@@ -1,41 +1,8 @@
 package  highgui
 
-/*
-#include <opencv/highgui.h>
-*/
-//import "C"
 import "os"
 import "image"
 import "io"
-
-//=============================================================================
-
-// An RGBA is an in-memory image backed by a 2-D slice of RGBAColor values.
-type IplImage struct {
-	// The Pixel field's indices are y first, then x, so that At(x, y) == Pixel[y][x].
-	Pixel [][]image.RGBAColor
-}
-
-func (p *IplImage) ColorModel() image.ColorModel { return image.NRGBAColorModel }
-
-func (p *IplImage) Width() int {
-	if len(p.Pixel) == 0 {
-		return 0
-	}
-	return len(p.Pixel[0])
-}
-
-func (p *IplImage) Height() int { return len(p.Pixel) }
-
-func (p *IplImage) At(x, y int) image.Color { return p.Pixel[y][x] }
-
-//func (p *IplImage) Set(x, y int, c image.Color) { p.Pixel[y][x] = toRGBAColor(c).(RGBAColor) }
-
-// NewRGBA returns a new RGBA with the given width and height.
-func NewIplImage(w, h int) *IplImage {
-
-	return &IplImage{}
-}
 
 /****************************************************************************************\
 *                                  Basic GUI functions                                   *
@@ -66,24 +33,25 @@ func GetWindowProperty(name string, prop_id int)(prop_value float, err os.Error)
 
 // 显式图像
 func ShowImage(name string, image image.Image)(err os.Error) {
-	return
+	return cvShowImage(name, image)
 }
 
 // 调整窗口大小
 func ResizeWindow(name string, width, height int)(err os.Error) {
-	return
+	return cvResizeWindow(name, width, height)
 }
 // 移动窗口
 func MoveWindow(name string, x, y int)(err os.Error) {
-	return
+	return cvMoveWindow(name, x, y)
 }
 
 // 销毁窗口
 func DestroyWindow(name string)(err os.Error) {
-	return
+	return cvDestroyWindow(name)
 }
 // 销毁全部窗口
 func DestroyAllWindows() {
+	cvDestroyAllWindows()
 }
 
 //=========================================================================
@@ -120,12 +88,12 @@ func WaitKey(ms int) {
 
 // 读图像
 func LoadImage(name string)(img image.Image, err os.Error) {
-	return
+	return cvLoadImage(name)
 }
 
 // 保存图像
 func SaveImage(name string, img image.Image)(err os.Error) {
-	return
+	return cvSaveImage(name, img)
 }
 
 // 解码图像

@@ -246,6 +246,74 @@ const (
 	CV_CAP_PROP_GAIN			= C.CV_CAP_PROP_GAIN_
 	CV_CAP_PROP_CONVERT_RGB		= C.CV_CAP_PROP_CONVERT_RGB_
 )
+//=============================================================================
+
+// IplImage type
+type IplImageType interface {
+	GetIplImage()*IplImage
+}
+
+// OpenCV IplImage
+
+type IplImage C.IplImage
+
+func (p *IplImage) ColorModel() image.ColorModel {
+	return image.NRGBAColorModel
+}
+
+func (p *IplImage) Width() int {
+	return int(p.width)
+}
+
+func (p *IplImage) Height() int {
+	return int(p.height)
+}
+
+func (p *IplImage) At(x, y int) image.Color {
+	v := C.cvGet2D(unsafe.Pointer(p), C.int(y), C.int(x));
+
+	b := uint8(v.val[0])
+	g := uint8(v.val[1])
+	r := uint8(v.val[2])
+	a := uint8(v.val[3])
+
+	return image.NRGBAColor{ r, g, b, a }
+}
+
+func (p *IplImage) Set(x, y int, color image.Color) {
+	r, g, b, _ := color.RGBA()
+	rgb := C.cvScalar(C.double(b), C.double(g), C.double(r), 0)
+	C.cvSet2D(unsafe.Pointer(p), C.int(y), C.int(x), rgb);
+}
+
+func (p *IplImage)Release() {
+	if p != nil {
+		pImg := (*C.IplImage)(p)
+		C.cvReleaseImage(&pImg)
+		p = nil
+	}
+}
+
+func (p *IplImage) GetIplImage() *IplImage{
+	return p
+}
+
+func NewIplImage(w, h int) *IplImage {
+	size := C.cvSize(C.int(w), C.int(h))
+	img := C.cvCreateImage(size, C.GO_IPL_DEPTH_8U, 3)
+	return (*IplImage)(img)
+}
+func CloneImage(image image.Image) *IplImage {
+	p := NewIplImage(image.Width(), image.Height())
+
+	for i := 0; i < image.Height(); i++ {
+		for j := 0; j < image.Width(); j++ {
+			color := image.At(i, j)
+			p.Set(i, j, color)
+		}
+	}
+	return p
+}
 
 //=============================================================================
 
@@ -282,21 +350,16 @@ func cvGetWindowProperty(name string, prop_id int)(prop_value float, err os.Erro
 
 // 显式图像
 func cvShowImage(name string, image image.Image)(err os.Error) {
-	// make a copy
-	size := C.cvSize(C.int(image.Width()), C.int(image.Height()))
-	pIplImage := C.cvCreateImage(size, C.GO_IPL_DEPTH_8U, 3)
-
-	for i := 0; i < image.Height(); i++ {
-		for j := 0; j < image.Width(); j++ {
-			color := image.At(i, j)
-			r, g, b, _ := color.RGBA()
-			rgb := C.cvScalar(C.double(b), C.double(g), C.double(r), 0)
-			C.cvSet2D(unsafe.Pointer(pIplImage), C.int(i), C.int(j), rgb);
-		}
+	if img, ok := image.(IplImageType); ok {
+		p := img.GetIplImage()
+		pImg := (*C.IplImage)(p)
+		C.cvShowImage(C.CString(name), unsafe.Pointer(pImg))
+	} else {
+		p := CloneImage(image)
+		pImg := (*C.IplImage)(p)
+		C.cvShowImage(C.CString(name), unsafe.Pointer(pImg))
+		p.Release()
 	}
-
-	C.cvShowImage(C.CString(name), unsafe.Pointer(pIplImage))
-	C.cvReleaseImage(&pIplImage)
 	return
 }
 
@@ -323,6 +386,30 @@ func cvDestroyAllWindows() {
 
 func cvWaitKey(key int) {
 	C.cvWaitKey(C.int(key))
+}
+
+//=============================================================================
+
+// 读图像
+func cvLoadImage(name string)(img image.Image, err os.Error) {
+	pImg := C.cvLoadImage(C.CString(name), CV_LOAD_IMAGE_COLOR)
+	img = (*IplImage)(pImg)
+	return
+}
+
+// 保存图像
+func cvSaveImage(name string, image image.Image)(err os.Error) {
+	if img, ok := image.(IplImageType); ok {
+		p := img.GetIplImage()
+		pImg := (*C.IplImage)(p)
+		C.cvSaveImage(C.CString(name), unsafe.Pointer(pImg))
+	} else {
+		p := CloneImage(image)
+		pImg := (*C.IplImage)(p)
+		C.cvSaveImage(C.CString(name), unsafe.Pointer(pImg))
+		p.Release()
+	}
+	return
 }
 
 //=============================================================================
