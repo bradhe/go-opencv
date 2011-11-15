@@ -4,20 +4,9 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=opencv
+TARGS:=\
+	edge\
+	inpaint
 
-GOFILES=\
-	opencv.go
-
-CGOFILES=\
-	cxtype.go\
-	cxcore.go\
-	cv.go\
-	highgui.go
-
-include $(GOROOT)/src/Make.pkg
-
-%: install %.go
-	$(GC) $*.go
-	$(LD) -o $@ $*.$O
+include ./Make.samples
 

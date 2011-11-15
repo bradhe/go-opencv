@@ -12,7 +12,7 @@ import (
 func main() {
 	opencv.InitSystem(os.Args)
 
-	image := opencv.LoadImage("./samples/lena.jpg", opencv.CV_LOAD_IMAGE_COLOR)
+	image := opencv.LoadImage("./lena.jpg", opencv.CV_LOAD_IMAGE_COLOR)
 	if image == nil {
 		panic("LoadImage fail")
 	}

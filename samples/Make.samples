@@ -1,0 +1,18 @@
+# Copyright 2011 <chaishushan@gmail.com>. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+all: ${TARGS}
+
+clean:
+	rm -rf *.o *.[${O}] [$(OS)].out
+	rm -rf ${TARGS}
+
+nuke: clean
+
+	
+$(TARGS): $(TARGS:%=%.go)
+	${GC} $@.go
+	${LD} -o $@ $@.${O}
+
+
