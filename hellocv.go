@@ -17,9 +17,8 @@ func main() {
 		panic("LoadImage fail")
 	}
 
-	winName := "Go-OpenCV"
-	opencv.NamedWindow(winName, opencv.CV_WINDOW_AUTOSIZE)
-	opencv.ShowImage(winName, image);
+	win := opencv.NewWindow("Go-Opencv", true)
+	win.ShowImage(image);
 
 	opencv.WaitKey(0)
 }

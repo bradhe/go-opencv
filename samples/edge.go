@@ -17,28 +17,32 @@ func main() {
 	if image == nil {
 		panic("LoadImage fail")
 	}
+	defer opencv.ReleaseImage(image)
 
 	w := opencv.GetSizeWidth(image)
 	h := opencv.GetSizeHeight(image)
 
 	// Create the output image
 	cedge := opencv.CreateImage(w, h, opencv.IPL_DEPTH_8U, 3);
+	defer opencv.ReleaseImage(cedge)
 
 	// Convert to grayscale
 	gray := opencv.CreateImage(w, h, opencv.IPL_DEPTH_8U, 1);
 	edge := opencv.CreateImage(w, h, opencv.IPL_DEPTH_8U, 1);
+	defer opencv.ReleaseImage(gray)
+	defer opencv.ReleaseImage(edge)
+
 	opencv.CvtColor(image, gray, opencv.CV_BGR2GRAY);
 
-	var edge_thresh int = 1
+	win := opencv.NewWindow("Edge", true)
+	defer win.Destroy()
 
-	win := opencv.NewWindow("Edge",
-		func(event, x, y, flags int, param interface{}) {
-		//	fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n", event, x, y, flags)	
-		})
+	win.SetMouseCallback(func(event, x, y, flags int, win *opencv.Window) {
+		fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n", event, x, y, flags)	
+	})
 
-	win.CreateTrackbar("Edge", 1, 100, func(pos int) {
-		//if pos > 0 { edge_thresh = pos }
-		edge_thresh = pos
+	win.CreateTrackbar("Thresh", 1, 100, func(pos int, win *opencv.Window) {
+		edge_thresh := pos
 
 		opencv.Smooth( gray, edge, opencv.CV_BLUR, 3, 3, 0, 0 );
 		opencv.Not( gray, edge );
@@ -51,12 +55,16 @@ func main() {
 		opencv.Copy( image, cedge, edge );
 
 		win.ShowImage(cedge);
-		//cvShowImage(wndname, cedge);
 
 		fmt.Printf("pos = %d\n", pos)
 	})
 	win.ShowImage(image);
 
-	opencv.WaitKey(0)
+	for {
+		key := opencv.WaitKey(20)
+		if key == int("q"[0]) { os.Exit(0) }
+	}
+
+	os.Exit(0)
 }
 

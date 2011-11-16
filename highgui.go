@@ -12,11 +12,18 @@ package opencv
 #include <string.h>
 
 //-----------------------------------------------------------------------------
-// cvCreateTrackbar2 wrap
+// trackbar
+//-----------------------------------------------------------------------------
+
+// trackbar data
 struct TrackbarUserdata {
 	schar* win_name;
 	schar* bar_name;
+	int value;
 };
+static struct TrackbarUserdata *trackbar_list[1000];
+static int trackbar_list_len = 0;
+
 static void trackbarCallback(int pos, void* userdata)
 {
 	extern void goTrackbarCallback(schar* pbarName0, schar* winName1, int pos);
@@ -25,22 +32,39 @@ static void trackbarCallback(int pos, void* userdata)
 	goTrackbarCallback(arg->bar_name, arg->win_name, pos);
 }
 static int CreateTrackbar(
-	const char* trackbar_name, const char* window_name,
+	char* trackbar_name, char* window_name,
 	int value, int count
 )
 {
 	struct TrackbarUserdata *userdata = malloc(sizeof(*userdata));
+	trackbar_list[trackbar_list_len++] = userdata;
+
 	userdata->win_name = (schar*)window_name;
 	userdata->bar_name = (schar*)trackbar_name;
+	userdata->value = value;
 
 	return cvCreateTrackbar2(trackbar_name, window_name,
-		&value, count,
+		&(userdata->value), count,
 		trackbarCallback, userdata
 	);
 }
+static void DestroyTrackbar(char* trackbar_name, char* window_name)
+{
+	int i;
+	for(i = 0; i < trackbar_list_len; ++i) {
+		if(strcmp((char*)trackbar_list[i]->win_name, window_name)) continue;
+		if(strcmp((char*)trackbar_list[i]->bar_name, trackbar_name)) continue;
+
+		free(trackbar_list[i]);
+		trackbar_list[i] = trackbar_list[--trackbar_list_len];
+		break;
+	}
+}
 
 //-----------------------------------------------------------------------------
-// cvSetMouseCallback wrap
+// mouse callback
+//-----------------------------------------------------------------------------
+
 static void mouseCallback(int event, int x, int y, int flags, void* param)
 {
 	extern void goMouseCallback(schar* name, int event, int x, int y, int flags);
@@ -60,31 +84,25 @@ unsigned CV_FOURCC_(int c1, int c2, int c3, int c4) {
 	return (unsigned)CV_FOURCC(c1,c2,c3,c4);
 }
 
-unsigned CV_FOURCC_DEFAULT_() {
-	return (unsigned)CV_FOURCC_DEFAULT;
-}
-
 //-----------------------------------------------------------------------------
 */
 import "C"
 import (
 	"runtime"
 	"unsafe"
+	"fmt"
 //	"errors"
 )
 
 func init() {
-	//
+	if false {
+		fmt.Printf("highgui.go init")
+	}
 }
 
 /*****************************************************************************\
 *                         Basic GUI functions                                 *
 \*****************************************************************************/
-
-// window list
-var allWindows = make(map[string]*Window, 1000)
-
-/**************************************************************/
 
 /* this function is used to set some external parameters in case of X Window */
 func InitSystem(args []string) int {
@@ -101,11 +119,64 @@ func StartWindowThread() int {
 	return int(C.cvStartWindowThread())
 }
 
-const CV_WINDOW_AUTOSIZE = int(C.CV_WINDOW_AUTOSIZE)
+/* wait for key event infinitely (delay<=0) or for "delay" milliseconds */
+func WaitKey(delay int) int {
+	key := C.cvWaitKey(C.int(delay))
+	return int(key)
+}
+
+//-----------------------------------------------------------------------------
+// Window wrapper for go
+//-----------------------------------------------------------------------------
+
+// window list
+var allWindows = make(map[string]*Window, 1000)
+
+// named window
+type Window struct {
+	name           string
+	name_c        *C.char
+	flags          C.int
+
+	mouseHandle    MouseFunc
+	trackbarHandle map[string]TrackbarFunc
+	trackbarMax    map[string]int
+	trackbarVal    map[string]int
+	trackbarName   map[string](*C.char)
+
+	image          *IplImage
+	refCount       int
+}
+
+// mouse callback
+type MouseFunc func(event, x, y, flags int, win *Window)
+// trackbar callback
+type TrackbarFunc func(pos int, win *Window)
+
+//-----------------------------------------------------------------------------
+// window: create
+//-----------------------------------------------------------------------------
 
 /* create window */
-func NamedWindow(name string, flags int) int {
-	return int(C.cvNamedWindow(C.CString(name), C.int(flags)))
+func NewWindow(name string, auto_size bool) *Window {
+	win_flags := C.int(0)
+	if auto_size { win_flags = C.CV_WINDOW_AUTOSIZE }
+
+	win := &Window{
+		name:name,
+		name_c:C.CString(name),
+		flags:win_flags,
+
+		trackbarHandle:make(map[string]TrackbarFunc, 50),
+		trackbarMax:make(map[string]int, 50),
+		trackbarVal:make(map[string]int, 50),
+		trackbarName:make(map[string](*C.char), 50),
+	}
+	C.cvNamedWindow(win.name_c, win.flags)
+	C.SetMouseCallback(win.name_c)
+
+	allWindows[win.name] = win
+	return win
 }
 
 // ---------  YV ---------
@@ -116,60 +187,71 @@ const (
 	CV_WINDOW_FULLSCREEN   = C.CV_WINDOW_FULLSCREEN
 )
 /* Set and Get Property of the window */
-func SetWindowProperty(name string, prop_id int, value float64) {
-	C.cvSetWindowProperty(C.CString(name), C.int(prop_id), C.double(value))
+func (win *Window)SetProperty(prop_id int, value float64)  {
+	C.cvSetWindowProperty(win.name_c, C.int(prop_id), C.double(value))
 }
-func cvGetWindowProperty(name string, prop_id int) float64 {
-	return float64(C.cvGetWindowProperty(C.CString(name), C.int(prop_id)))
+func (win *Window)GetProperty(prop_id int) float64 {
+	rv := C.cvGetWindowProperty(win.name_c, C.int(prop_id))
+	return float64(rv)
 }
 
 /* display image within window (highgui windows remember their content) */
-func ShowImage(name string, image *IplImage) {
-	C.cvShowImage(C.CString(name), unsafe.Pointer(image))
+func (win *Window)ShowImage(image *IplImage)  {
+	win.image = image
+	C.cvShowImage(win.name_c, unsafe.Pointer(image))
 }
 
 /* resize/move window */
-func ResizeWindow(name string, width, height int) {
-	C.cvResizeWindow(C.CString(name), C.int(width), C.int(height))
+func (win *Window)Resize(width, height int)  {
+	C.cvResizeWindow(win.name_c, C.int(width), C.int(height))
 }
-func MoveWindow(name string, x, y int) {
-	C.cvMoveWindow(C.CString(name), C.int(x), C.int(y))
+func (win *Window)Move(x, y int)  {
+	C.cvMoveWindow(win.name_c, C.int(x), C.int(y))
 }
 
-/* destroy window and all the trackers associated with it */
-func DestroyWindow(name string) {
-	C.cvDestroyWindow(C.CString(name))
-}
-func DestroyAllWindows() {
-	C.cvDestroyAllWindows()
-}
 
 /* get native window handle (HWND in case of Win32 and Widget in case of X Window) */
-func GetWindowHandle(name string) unsafe.Pointer {
-	return C.cvGetWindowHandle(C.CString(name))
+func (win *Window)GetHandle() unsafe.Pointer {
+	p := C.cvGetWindowHandle(C.CString(win.name))
+	return unsafe.Pointer(p)
 }
 
 /* get name of highgui window given its native handle */
-func GetWindowName(window_handle unsafe.Pointer) string {
-	name := C.cvGetWindowName(window_handle)
-	return C.GoString(name)
+func (win *Window)GetWindowName() string {
+	return win.name
 }
 
+//-----------------------------------------------------------------------------
+// window: track bar
+//-----------------------------------------------------------------------------
+
 /* create trackbar and display it on top of given window, set callback */
-func CreateTrackbar(bar_name, win_name string, value, count int) int {
-	rv := C.CreateTrackbar(C.CString(bar_name), C.CString(win_name),
+func (win *Window)CreateTrackbar(name string,
+	value, count int,
+	on_changed TrackbarFunc) int  {
+
+	bar_name := C.CString(name)
+
+	win.trackbarVal[name] = value
+	win.trackbarMax[name] = count
+	win.trackbarHandle[name] = on_changed
+	win.trackbarName[name] = bar_name
+
+	rv := C.CreateTrackbar(bar_name, win.name_c,
 		C.int(value), C.int(count))
 	return int(rv)
 }
 //export goTrackbarCallback
 func goTrackbarCallback(barName_, winName_ *C.char, pos C.int) {
+
 	winName := C.GoString(winName_)
 	barName := C.GoString(barName_)
+
 	if win, ok := allWindows[winName]; ok {
 		if trackbarHandle, ok := win.trackbarHandle[barName]; ok {
 			runtime.LockOSThread()
 			if trackbarHandle != nil {
-				trackbarHandle(int(pos))
+				trackbarHandle(int(pos), win)
 			}
 			runtime.UnlockOSThread()
 		}
@@ -177,13 +259,23 @@ func goTrackbarCallback(barName_, winName_ *C.char, pos C.int) {
 }
 
 /* retrieve or set trackbar position */
-func GetTrackbarPos(trackbar_name, window_name string) int {
-	rv := C.cvGetTrackbarPos(C.CString(trackbar_name), C.CString(window_name))
-	return int(rv)
+func (win *Window)GetTrackbarPos(name string) (value, max int) {
+	bar_name := C.CString(name)
+	defer C.free(unsafe.Pointer(bar_name))
+
+	rv := C.cvGetTrackbarPos(bar_name, win.name_c)
+	return int(rv), win.trackbarMax[name]
 }
-func SetTrackbarPos(trackbar_name, window_name string, pos int) {
-	C.cvSetTrackbarPos(C.CString(trackbar_name), C.CString(window_name), C.int(pos))
+func (win *Window)SetTrackbarPos(name string, pos int) {
+	bar_name := C.CString(name)
+	defer C.free(unsafe.Pointer(bar_name))
+
+	C.cvSetTrackbarPos(bar_name, win.name_c, C.int(pos))
 }
+
+//-----------------------------------------------------------------------------
+// window: mouse callback
+//-----------------------------------------------------------------------------
 
 const (
 	CV_EVENT_MOUSEMOVE     = C.CV_EVENT_MOUSEMOVE
@@ -206,8 +298,8 @@ const (
 )
 
 /* assign callback for mouse events */
-func SetMouseCallback(winName string) {
-	C.SetMouseCallback(C.CString(winName))
+func (win *Window)SetMouseCallback(on_mouse MouseFunc)  {
+	win.mouseHandle = on_mouse
 }
 //export goMouseCallback
 func goMouseCallback(name *C.char, event, x, y, flags C.int) {
@@ -216,12 +308,42 @@ func goMouseCallback(name *C.char, event, x, y, flags C.int) {
 		if win.mouseHandle != nil {
 			runtime.LockOSThread()
 			if win.mouseHandle != nil {
-				win.mouseHandle(int(event), int(x), int(y), int(flags), win.param)
+				win.mouseHandle(int(event),
+					int(x), int(y), int(flags), win,
+				)
 			}
 			runtime.UnlockOSThread()
 		}
 	}
 }
+
+//-----------------------------------------------------------------------------
+// window: destroy
+//-----------------------------------------------------------------------------
+
+/* destroy window and all the trackers associated with it */
+func (win *Window) Destroy()  {
+	C.cvDestroyWindow(win.name_c)
+	delete(allWindows, win.name)
+
+	for _, bar_name := range win.trackbarName {
+		C.DestroyTrackbar(bar_name, win.name_c)
+		C.free(unsafe.Pointer(bar_name))
+	}
+	C.free(unsafe.Pointer(win.name_c))
+	win.name_c = nil
+}
+
+/* destroy window and all the trackers associated with it */
+func DestroyAllWindows() {
+	for _, win := range allWindows {
+		win.Destroy()
+	}
+}
+
+//-----------------------------------------------------------------------------
+// image utils
+//-----------------------------------------------------------------------------
 
 const (
 	/* 8bit, color or not */
@@ -289,10 +411,7 @@ const (
 func ConvertImage(src, dst unsafe.Pointer, flags int) {
 	C.cvConvertImage(src, dst, C.int(flags))
 }
-/* wait for key event infinitely (delay<=0) or for "delay" milliseconds */
-func WaitKey(delay int) {
-	C.cvWaitKey(C.int(delay))
-}
+
 
 /*****************************************************************************\
 *                        Working with Video Files and Cameras                 *
@@ -302,9 +421,9 @@ func WaitKey(delay int) {
 type Capture C.CvCapture
 
 /* start capturing frames from video file */
-func CreateFileCapture(filename string) *Capture {
-	rv := C.cvCreateFileCapture(C.CString(filename))
-	return (*Capture)(rv)
+func NewFileCapture(filename string) *Capture {
+	cap := C.cvCreateFileCapture(C.CString(filename))
+	return (*Capture)(cap)
 }
 
 const (
@@ -339,14 +458,14 @@ const (
 )
 
 /* start capturing frames from camera: index = camera_index + domain_offset (CV_CAP_*) */
-func CreateCameraCapture(index int) *Capture {
-	rv := C.cvCreateCameraCapture(C.int(index))
-	return (*Capture)(rv)
+func NewCameraCapture(index int) *Capture {
+	cap := C.cvCreateCameraCapture(C.int(index))
+	return (*Capture)(cap)
 }
 
 /* grab a frame, return 1 on success, 0 on fail.
   this function is thought to be fast               */
-func GrabFrame(capture *Capture) int {
+func (capture *Capture)GrabFrame() int {
 	rv := C.cvGrabFrame((*C.CvCapture)(capture))
 	return int(rv)
 }
@@ -355,20 +474,20 @@ func GrabFrame(capture *Capture) int {
   This function may apply some frame processing like
   frame decompression, flipping etc.
   !!!DO NOT RELEASE or MODIFY the retrieved frame!!! */
-func RetrieveFrame(capture *Capture, streamIdx int) unsafe.Pointer {
+func (capture *Capture)RetrieveFrame(streamIdx int) unsafe.Pointer {
 	rv := C.cvRetrieveFrame((*C.CvCapture)(capture), C.int(streamIdx))
 	return unsafe.Pointer(rv)
 }
 
 /* Just a combination of cvGrabFrame and cvRetrieveFrame
    !!!DO NOT RELEASE or MODIFY the retrieved frame!!!      */
-func QueryFrame(capture *Capture) *IplImage {
+func (capture *Capture)QueryFrame() *IplImage {
 	rv := C.cvQueryFrame((*C.CvCapture)(capture))
 	return (*IplImage)(rv)
 }
 
 /* stop capturing/reading and free resources */
-func ReleaseCapture(capture *Capture) {
+func (capture *Capture)ReleaseCapture() {
 	cap_c := (*C.CvCapture)(capture)
 	C.cvReleaseCapture(&cap_c)
 }
@@ -396,20 +515,29 @@ const (
 )
 
 /* retrieve or set capture properties */
-func GetCaptureProperty(capture *Capture, property_id int) float64 {
-	rv := C.cvGetCaptureProperty((*C.CvCapture)(capture), C.int(property_id))
+func (capture *Capture)GetProperty(property_id int) float64 {
+	rv := C.cvGetCaptureProperty((*C.CvCapture)(capture),
+		C.int(property_id),
+	)
 	return float64(rv)
 }
-func SetCaptureProperty(capture *Capture, property_id int, value float64) int {
-	rv := C.cvSetCaptureProperty((*C.CvCapture)(capture), C.int(property_id), C.double(value))
+func (capture *Capture)SetProperty(property_id int, value float64) int {
+	rv := C.cvSetCaptureProperty((*C.CvCapture)(capture),
+		C.int(property_id), C.double(value),
+	)
 	return int(rv)
 }
 
-// Return the type of the capturer (eg, CV_CAP_V4W, CV_CAP_UNICAP), which is unknown if created with CV_CAP_ANY
+// Return the type of the capturer (eg, CV_CAP_V4W, CV_CAP_UNICAP),
+// which is unknown if created with CV_CAP_ANY
 func GetCaptureDomain(capture *Capture) int {
 	rv := C.cvGetCaptureDomain((*C.CvCapture)(capture))
 	return int(rv)
 }
+
+//-----------------------------------------------------------------------------
+// VideoWriter
+//-----------------------------------------------------------------------------
 
 /* "black box" video file writer structure */
 type VideoWriter C.CvVideoWriter
@@ -420,26 +548,31 @@ func FOURCC(c1, c2, c3, c4 int8) uint32 {
 	return uint32(rv)
 }
 const (
-	CV_FOURCC_PROMPT  = C.CV_FOURCC_PROMPT		/* Open Codec Selection Dialog (Windows only) */
-	//CV_FOURCC_DEFAULT = C.CV_FOURCC_DEFAULT_()	/* Use default codec for specified filename (Linux only) */
+	CV_FOURCC_PROMPT  = C.CV_FOURCC_PROMPT  /* Open Codec Selection Dialog (Windows only) */
+	CV_FOURCC_DEFAULT = C.CV_FOURCC_DEFAULT /* Use default codec for specified filename (Linux only) */
 )
 
 /* initialize video file writer */
-func CreateVideoWriter(filename string, fourcc int, fps float32,
-	frame_width, frame_height, is_color int) *VideoWriter {
+func NewVideoWriter(filename string,
+	fourcc int, fps float32,
+	frame_width, frame_height,
+	is_color int) *VideoWriter {
+
 	size := C.cvSize(C.int(frame_width), C.int(frame_height))
-	rv := C.cvCreateVideoWriter(C.CString(filename), C.int(fourcc), C.double(fps), size, C.int(is_color))
+	rv := C.cvCreateVideoWriter(C.CString(filename),
+		C.int(fourcc), C.double(fps), size, C.int(is_color),
+	)
 	return (*VideoWriter)(rv)
 }
 
 /* write frame to video file */
-func WriteFrame(writer *VideoWriter, image *IplImage) int {
+func (writer *VideoWriter) WriteFrame(image *IplImage) int {
 	rv := C.cvWriteFrame((*C.CvVideoWriter)(writer), (*C.IplImage)(image))
 	return int(rv)
 }
 
 /* close video file writer */
-func ReleaseVideoWriter(writer *VideoWriter) {
+func (writer *VideoWriter) Release() {
 	writer_c := (*C.CvVideoWriter)(writer)
 	C.cvReleaseVideoWriter(&writer_c)
 }

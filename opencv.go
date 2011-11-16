@@ -59,68 +59,6 @@ func (self *IplImage)Height() int {
 // Window
 //-----------------------------------------------------------------------------
 
-// mouse callback
-type MouseFunc func(event, x, y, flags int, param interface{})
-// trackbar callback
-type TrackbarFunc func(pos int)
-
-// named window
-type Window struct {
-	name           string
-	flags          int
-	mouseHandle    MouseFunc
-	param          interface{}
-	trackbarHandle map[string]TrackbarFunc
-	trackbarMax    map[string]int
-	trackbarVal    map[string]int
-	refCount       int
-}
-
-func NewWindow(name string, on_mouse MouseFunc) *Window {
-	win := &Window{
-		name:name, flags:CV_WINDOW_AUTOSIZE,
-		mouseHandle:on_mouse, param:nil,
-		trackbarHandle:make(map[string]TrackbarFunc, 50),
-		trackbarMax:make(map[string]int, 50),
-		trackbarVal:make(map[string]int, 50),
-	}
-	NamedWindow(name, CV_WINDOW_AUTOSIZE)
-	SetMouseCallback(name)
-	allWindows[name] = win
-	return win
-}
-func (self *Window)CreateTrackbar(name string, value, count int, on_changed TrackbarFunc)  {
-	self.trackbarVal[name] = value
-	self.trackbarMax[name] = count
-	self.trackbarHandle[name] = on_changed
-	CreateTrackbar(name, self.name, value, count)
-}
-
-func (self *Window)Name() string {
-	return self.name
-}
-
-func (self *Window)ShowImage(image *IplImage)  {
-	ShowImage(self.name, image)
-}
-func (self *Window)Resize(width, height int)  {
-	ResizeWindow(self.name, width, height)
-}
-func (self *Window)Move(x, y int)  {
-	MoveWindow(self.name, x, y)
-}
-func (self *Window)Destroy()  {
-	DestroyWindow(self.name)
-	delete(allWindows, self.name)
-}
-
-//func (self *Window)GetTrackbarPos(name string) value, max int {
-//	return self.trackbarVal[name], self.trackbarMax[name]
-//}
-func (self *Window)SetTrackbarPos(name string, value int) {
-	SetTrackbarPos(name, self.name, value)
-	self.trackbarVal[name] = value
-}
 
 //-----------------------------------------------------------------------------
 // End
