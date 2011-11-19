@@ -152,11 +152,11 @@ func NewRNG(seed int64) RNG {
 	rv := C.cvRNG(C.int64(seed))
 	return RNG(rv)
 }
-func RandInt(rng *RNG) uint {
+func (rng *RNG)RandInt() uint {
 	rv := C.cvRandInt((*C.CvRNG)(rng))
 	return uint(rv)
 }
-func RandReal(rng *RNG) float64 {
+func (rng *RNG)RandReal() float64 {
 	rv := C.cvRandReal((*C.CvRNG)(rng))
 	return float64(rv)
 }
@@ -203,6 +203,40 @@ const (
 )
 
 type IplImage        C.IplImage
+
+func NewIplImage(w, h, depth, channels int) *IplImage {
+	return nil
+}
+func (img *IplImage)Create(w, h, depth, channels int) bool {
+	return false
+}
+func (img *IplImage)Release() {
+	img_c := (*C.IplImage)(img)
+	C.cvReleaseImage(&img_c)
+}
+
+func (img *IplImage)Width() int {
+	return 0
+}
+func (img *IplImage)Height() int {
+	return 0
+}
+
+//func (self *IplImage)ColorModel() image.ColorModel {
+//	return image.RGBAColorModel
+//}
+//func (self *IplImage)Bounds() image.Rectangle {
+//	return image.Rectangle{{0,0},{0,0}}
+//}
+//func (self *IplImage)At(x, y int) image.Color {
+//	return image.RGBAColor{0,0,0,0}
+//}
+
+//func (self *IplImage)Set(x, y int, c Color) {
+//	//return image.RGBAColor{0,0,0,0}
+//}
+
+
 type IplROI          C.IplROI
 type IplConvKernel   C.IplConvKernel
 type IplConvKernelFP C.IplConvKernelFP
@@ -286,9 +320,23 @@ type TermCriteria C.CvTermCriteria
 
 /******************************* CvPoint and variants ***********************************/
 
-type Point C.CvPoint
-type Point2D32f C.CvPoint2D32f
-type Point3D32f C.CvPoint3D32f
+type Point struct {
+	X int
+	Y int
+}
+
+type Point2D32f struct {
+	X float32
+	Y float32
+}
+type Point3D32f struct {
+	X float32
+	Y float32
+	Z float32
+}
+
+//type Point2D32f C.CvPoint2D32f
+//type Point3D32f C.CvPoint3D32f
 
 type Point2D64f C.CvPoint2D64f
 type Point3D64f C.CvPoint3D64f
@@ -297,7 +345,12 @@ type Point3D64f C.CvPoint3D64f
 
 /******************************** CvSize's & CvBox **************************************/
 
-type Size C.CvSize
+type Size struct {
+	Width  int
+	Height int
+}
+
+
 type Size2D32f C.CvSize2D32f
 
 type Box2D C.CvBox2D
@@ -311,7 +364,28 @@ type Slice C.CvSlice
 
 /************************************* CvScalar *****************************************/
 
-type Scalar C.CvScalar
+type Scalar struct {
+	Val [4]float64
+}
+
+func ScalarAll(val0 float64) Scalar {
+	var scalar Scalar
+	scalar.Val[0] = val0
+	scalar.Val[1] = val0
+	scalar.Val[2] = val0
+	scalar.Val[3] = val0
+	return scalar
+}
+
+func (s *Scalar)toCvScalar() C.CvScalar {
+	rv := C.cvScalar(
+		C.double(s.Val[0]),
+		C.double(s.Val[1]),
+		C.double(s.Val[2]),
+		C.double(s.Val[3]),
+	)
+	return rv
+}
 
 /****************************************************************************************\
 *                                   Dynamic Data structures                              *

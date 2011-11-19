@@ -105,7 +105,8 @@ func init() {
 \*****************************************************************************/
 
 /* this function is used to set some external parameters in case of X Window */
-func InitSystem(args []string) int {
+func initSystem(args []string) int {
+	//if false { return }
 	argc := C.int(len(args))
 	argv := make([]*C.char, len(args))
 	for i := 0; i < len(args); i++ {
@@ -181,10 +182,10 @@ func NewWindow(name string, auto_size bool) *Window {
 
 // ---------  YV ---------
 const (
-	CV_WND_PROP_FULLSCREEN = C.CV_WND_PROP_FULLSCREEN
-	CV_WND_PROP_AUTOSIZE   = C.CV_WND_PROP_AUTOSIZE
-	CV_WINDOW_NORMAL       = C.CV_WINDOW_NORMAL
-	CV_WINDOW_FULLSCREEN   = C.CV_WINDOW_FULLSCREEN
+	CV_WND_PROP_FULLSCREEN = int(C.CV_WND_PROP_FULLSCREEN)
+	CV_WND_PROP_AUTOSIZE   = int(C.CV_WND_PROP_AUTOSIZE)
+	CV_WINDOW_NORMAL       = int(C.CV_WINDOW_NORMAL)
+	CV_WINDOW_FULLSCREEN   = int(C.CV_WINDOW_FULLSCREEN)
 )
 /* Set and Get Property of the window */
 func (win *Window)SetProperty(prop_id int, value float64)  {
@@ -208,7 +209,6 @@ func (win *Window)Resize(width, height int)  {
 func (win *Window)Move(x, y int)  {
 	C.cvMoveWindow(win.name_c, C.int(x), C.int(y))
 }
-
 
 /* get native window handle (HWND in case of Win32 and Widget in case of X Window) */
 func (win *Window)GetHandle() unsafe.Pointer {
@@ -278,23 +278,23 @@ func (win *Window)SetTrackbarPos(name string, pos int) {
 //-----------------------------------------------------------------------------
 
 const (
-	CV_EVENT_MOUSEMOVE     = C.CV_EVENT_MOUSEMOVE
-	CV_EVENT_LBUTTONDOWN   = C.CV_EVENT_LBUTTONDOWN
-	CV_EVENT_RBUTTONDOWN   = C.CV_EVENT_RBUTTONDOWN
-	CV_EVENT_MBUTTONDOWN   = C.CV_EVENT_MBUTTONDOWN
-	CV_EVENT_LBUTTONUP     = C.CV_EVENT_LBUTTONUP
-	CV_EVENT_RBUTTONUP     = C.CV_EVENT_RBUTTONUP
-	CV_EVENT_MBUTTONUP     = C.CV_EVENT_MBUTTONUP
-	CV_EVENT_LBUTTONDBLCLK = C.CV_EVENT_LBUTTONDBLCLK
-	CV_EVENT_RBUTTONDBLCLK = C.CV_EVENT_RBUTTONDBLCLK
-	CV_EVENT_MBUTTONDBLCLK = C.CV_EVENT_MBUTTONDBLCLK
-
-	CV_EVENT_FLAG_LBUTTON  = C.CV_EVENT_FLAG_LBUTTON
-	CV_EVENT_FLAG_RBUTTON  = C.CV_EVENT_FLAG_RBUTTON
-	CV_EVENT_FLAG_MBUTTON  = C.CV_EVENT_FLAG_MBUTTON
-	CV_EVENT_FLAG_CTRLKEY  = C.CV_EVENT_FLAG_CTRLKEY
-	CV_EVENT_FLAG_SHIFTKEY = C.CV_EVENT_FLAG_SHIFTKEY
-	CV_EVENT_FLAG_ALTKEY   = C.CV_EVENT_FLAG_ALTKEY
+	CV_EVENT_MOUSEMOVE     = int(C.CV_EVENT_MOUSEMOVE    )
+	CV_EVENT_LBUTTONDOWN   = int(C.CV_EVENT_LBUTTONDOWN  )
+	CV_EVENT_RBUTTONDOWN   = int(C.CV_EVENT_RBUTTONDOWN  )
+	CV_EVENT_MBUTTONDOWN   = int(C.CV_EVENT_MBUTTONDOWN  )
+	CV_EVENT_LBUTTONUP     = int(C.CV_EVENT_LBUTTONUP    )
+	CV_EVENT_RBUTTONUP     = int(C.CV_EVENT_RBUTTONUP    )
+	CV_EVENT_MBUTTONUP     = int(C.CV_EVENT_MBUTTONUP    )
+	CV_EVENT_LBUTTONDBLCLK = int(C.CV_EVENT_LBUTTONDBLCLK)
+	CV_EVENT_RBUTTONDBLCLK = int(C.CV_EVENT_RBUTTONDBLCLK)
+	CV_EVENT_MBUTTONDBLCLK = int(C.CV_EVENT_MBUTTONDBLCLK)
+	
+	CV_EVENT_FLAG_LBUTTON  = int(C.CV_EVENT_FLAG_LBUTTON )
+	CV_EVENT_FLAG_RBUTTON  = int(C.CV_EVENT_FLAG_RBUTTON )
+	CV_EVENT_FLAG_MBUTTON  = int(C.CV_EVENT_FLAG_MBUTTON )
+	CV_EVENT_FLAG_CTRLKEY  = int(C.CV_EVENT_FLAG_CTRLKEY )
+	CV_EVENT_FLAG_SHIFTKEY = int(C.CV_EVENT_FLAG_SHIFTKEY)
+	CV_EVENT_FLAG_ALTKEY   = int(C.CV_EVENT_FLAG_ALTKEY  )
 )
 
 /* assign callback for mouse events */
@@ -322,7 +322,7 @@ func goMouseCallback(name *C.char, event, x, y, flags C.int) {
 //-----------------------------------------------------------------------------
 
 /* destroy window and all the trackers associated with it */
-func (win *Window) Destroy()  {
+func (win *Window)Destroy()  {
 	C.cvDestroyWindow(win.name_c)
 	delete(allWindows, win.name)
 
@@ -347,15 +347,15 @@ func DestroyAllWindows() {
 
 const (
 	/* 8bit, color or not */
-	CV_LOAD_IMAGE_UNCHANGED = C.CV_LOAD_IMAGE_UNCHANGED
+	CV_LOAD_IMAGE_UNCHANGED = int(C.CV_LOAD_IMAGE_UNCHANGED)
 	/* 8bit, gray */
-	CV_LOAD_IMAGE_GRAYSCALE = C.CV_LOAD_IMAGE_GRAYSCALE
+	CV_LOAD_IMAGE_GRAYSCALE = int(C.CV_LOAD_IMAGE_GRAYSCALE)
 	/* ?, color */
-	CV_LOAD_IMAGE_COLOR     = C.CV_LOAD_IMAGE_COLOR
+	CV_LOAD_IMAGE_COLOR     = int(C.CV_LOAD_IMAGE_COLOR)
 	/* any depth, ? */
-	CV_LOAD_IMAGE_ANYDEPTH  = C.CV_LOAD_IMAGE_ANYDEPTH
+	CV_LOAD_IMAGE_ANYDEPTH  = int(C.CV_LOAD_IMAGE_ANYDEPTH)
 	/* ?, any color */
-	CV_LOAD_IMAGE_ANYCOLOR  = C.CV_LOAD_IMAGE_ANYCOLOR
+	CV_LOAD_IMAGE_ANYCOLOR  = int(C.CV_LOAD_IMAGE_ANYCOLOR)
 )
 /* load image from file
   iscolor can be a combination of above flags where CV_LOAD_IMAGE_UNCHANGED
@@ -373,9 +373,9 @@ func LoadImageM(filename string, iscolor int) *Mat {
 }
 
 const (
-	CV_IMWRITE_JPEG_QUALITY    = C.CV_IMWRITE_JPEG_QUALITY
-	CV_IMWRITE_PNG_COMPRESSION = C.CV_IMWRITE_PNG_COMPRESSION
-	CV_IMWRITE_PXM_BINARY      = C.CV_IMWRITE_PXM_BINARY
+	CV_IMWRITE_JPEG_QUALITY    = int(C.CV_IMWRITE_JPEG_QUALITY)
+	CV_IMWRITE_PNG_COMPRESSION = int(C.CV_IMWRITE_PNG_COMPRESSION)
+	CV_IMWRITE_PXM_BINARY      = int(C.CV_IMWRITE_PXM_BINARY)
 )
 
 /* save image to file */
@@ -386,32 +386,31 @@ func SaveImage(filename string, image *IplImage, params int) int {
 }
 
 /* decode image stored in the buffer */
-func DecodeImage(buf unsafe.Pointer, iscolor int) unsafe.Pointer {
+func DecodeImage(buf unsafe.Pointer, iscolor int) *IplImage {
 	rv := C.cvDecodeImage((*C.CvMat)(buf), C.int(iscolor))
-	return unsafe.Pointer(rv)
+	return (*IplImage)(rv)
 }
-func DecodeImageM(buf unsafe.Pointer, iscolor int) unsafe.Pointer {
+func DecodeImageM(buf unsafe.Pointer, iscolor int) *Mat {
 	rv := C.cvDecodeImageM((*C.CvMat)(buf), C.int(iscolor))
-	return unsafe.Pointer(rv)
+	return (*Mat)(rv)
 }
 
 /* encode image and store the result as a byte vector (single-row 8uC1 matrix) */
-func EncodeImage(ext string, image unsafe.Pointer, params int) unsafe.Pointer {
+func EncodeImage(ext string, image unsafe.Pointer, params int) *Mat {
 	params_c := C.int(params)
 	rv := C.cvEncodeImage(C.CString(ext), (image), &params_c)
-	return unsafe.Pointer(rv)
+	return (*Mat)(rv)
 }
 
 const (
-	CV_CVTIMG_FLIP    = C.CV_CVTIMG_FLIP
-	CV_CVTIMG_SWAP_RB = C.CV_CVTIMG_SWAP_RB
+	CV_CVTIMG_FLIP    = int(C.CV_CVTIMG_FLIP)
+	CV_CVTIMG_SWAP_RB = int(C.CV_CVTIMG_SWAP_RB)
 )
 
 /* utility function: convert one image to another with optional vertical flip */
 func ConvertImage(src, dst unsafe.Pointer, flags int) {
 	C.cvConvertImage(src, dst, C.int(flags))
 }
-
 
 /*****************************************************************************\
 *                        Working with Video Files and Cameras                 *
@@ -427,34 +426,34 @@ func NewFileCapture(filename string) *Capture {
 }
 
 const (
-	CV_CAP_ANY      = C.CV_CAP_ANY		// autodetect
-
-	CV_CAP_MIL      = C.CV_CAP_MIL		// MIL proprietary drivers
-
-	CV_CAP_VFW      = C.CV_CAP_VFW		// platform native
-	CV_CAP_V4L      = C.CV_CAP_V4L
-	CV_CAP_V4L2     = C.CV_CAP_V4L2
-
-	CV_CAP_FIREWARE = C.CV_CAP_FIREWARE	// IEEE 1394 drivers
-	CV_CAP_FIREWIRE = C.CV_CAP_FIREWIRE
-	CV_CAP_IEEE1394 = C.CV_CAP_IEEE1394
-	CV_CAP_DC1394   = C.CV_CAP_DC1394
-	CV_CAP_CMU1394  = C.CV_CAP_CMU1394
-
-	CV_CAP_STEREO  = C.CV_CAP_STEREO	// TYZX proprietary drivers
-	CV_CAP_TYZX    = C.CV_CAP_TYZX
-	CV_TYZX_LEFT   = C.CV_TYZX_LEFT
-	CV_TYZX_RIGHT  = C.CV_TYZX_RIGHT
-	CV_TYZX_COLOR  = C.CV_TYZX_COLOR
-	CV_TYZX_Z      = C.CV_TYZX_Z
-
-	CV_CAP_QT      = C.CV_CAP_QT		// QuickTime
-
-	CV_CAP_UNICAP  = C.CV_CAP_UNICAP	// Unicap drivers
-
-	CV_CAP_DSHOW   = C.CV_CAP_DSHOW	// DirectShow (via videoInput)
-
-	CV_CAP_PVAPI   = C.CV_CAP_PVAPI	// PvAPI, Prosilica GigE SDK
+	CV_CAP_ANY      = int(C.CV_CAP_ANY)		// autodetect
+    
+	CV_CAP_MIL      = int(C.CV_CAP_MIL)		// MIL proprietary drivers
+    
+	CV_CAP_VFW      = int(C.CV_CAP_VFW)		// platform native
+	CV_CAP_V4L      = int(C.CV_CAP_V4L)
+	CV_CAP_V4L2     = int(C.CV_CAP_V4L2)
+    
+	CV_CAP_FIREWARE = int(C.CV_CAP_FIREWARE)	// IEEE 1394 drivers
+	CV_CAP_FIREWIRE = int(C.CV_CAP_FIREWIRE)
+	CV_CAP_IEEE1394 = int(C.CV_CAP_IEEE1394)
+	CV_CAP_DC1394   = int(C.CV_CAP_DC1394)
+	CV_CAP_CMU1394  = int(C.CV_CAP_CMU1394)
+    
+	CV_CAP_STEREO   = int(C.CV_CAP_STEREO)	// TYZX proprietary drivers
+	CV_CAP_TYZX     = int(C.CV_CAP_TYZX)
+	CV_TYZX_LEFT    = int(C.CV_TYZX_LEFT)
+	CV_TYZX_RIGHT   = int(C.CV_TYZX_RIGHT)
+	CV_TYZX_COLOR   = int(C.CV_TYZX_COLOR)
+	CV_TYZX_Z       = int(C.CV_TYZX_Z)
+    
+	CV_CAP_QT       = int(C.CV_CAP_QT)		// QuickTime
+    
+	CV_CAP_UNICAP   = int(C.CV_CAP_UNICAP)	// Unicap drivers
+    
+	CV_CAP_DSHOW    = int(C.CV_CAP_DSHOW)	// DirectShow (via videoInput)
+    
+	CV_CAP_PVAPI    = int(C.CV_CAP_PVAPI)	// PvAPI, Prosilica GigE SDK
 )
 
 /* start capturing frames from camera: index = camera_index + domain_offset (CV_CAP_*) */
@@ -465,18 +464,18 @@ func NewCameraCapture(index int) *Capture {
 
 /* grab a frame, return 1 on success, 0 on fail.
   this function is thought to be fast               */
-func (capture *Capture)GrabFrame() int {
+func (capture *Capture)GrabFrame() bool {
 	rv := C.cvGrabFrame((*C.CvCapture)(capture))
-	return int(rv)
+	return (rv != C.int(0))
 }
 
 /* get the frame grabbed with cvGrabFrame(..)
   This function may apply some frame processing like
   frame decompression, flipping etc.
   !!!DO NOT RELEASE or MODIFY the retrieved frame!!! */
-func (capture *Capture)RetrieveFrame(streamIdx int) unsafe.Pointer {
+func (capture *Capture)RetrieveFrame(streamIdx int) *IplImage {
 	rv := C.cvRetrieveFrame((*C.CvCapture)(capture), C.int(streamIdx))
-	return unsafe.Pointer(rv)
+	return (*IplImage)(rv)
 }
 
 /* Just a combination of cvGrabFrame and cvRetrieveFrame
@@ -487,31 +486,31 @@ func (capture *Capture)QueryFrame() *IplImage {
 }
 
 /* stop capturing/reading and free resources */
-func (capture *Capture)ReleaseCapture() {
+func (capture *Capture)Release() {
 	cap_c := (*C.CvCapture)(capture)
 	C.cvReleaseCapture(&cap_c)
 }
 
 const (
-	CV_CAP_PROP_POS_MSEC      = C.CV_CAP_PROP_POS_MSEC
-	CV_CAP_PROP_POS_FRAMES    = C.CV_CAP_PROP_POS_FRAMES
-	CV_CAP_PROP_POS_AVI_RATIO = C.CV_CAP_PROP_POS_AVI_RATIO
-	CV_CAP_PROP_FRAME_WIDTH   = C.CV_CAP_PROP_FRAME_WIDTH
-	CV_CAP_PROP_FRAME_HEIGHT  = C.CV_CAP_PROP_FRAME_HEIGHT
-	CV_CAP_PROP_FPS           = C.CV_CAP_PROP_FPS
-	CV_CAP_PROP_FOURCC        = C.CV_CAP_PROP_FOURCC
-	CV_CAP_PROP_FRAME_COUNT   = C.CV_CAP_PROP_FRAME_COUNT
-	CV_CAP_PROP_FORMAT        = C.CV_CAP_PROP_FORMAT
-	CV_CAP_PROP_MODE          = C.CV_CAP_PROP_MODE
-	CV_CAP_PROP_BRIGHTNESS    = C.CV_CAP_PROP_BRIGHTNESS
-	CV_CAP_PROP_CONTRAST      = C.CV_CAP_PROP_CONTRAST
-	CV_CAP_PROP_SATURATION    = C.CV_CAP_PROP_SATURATION
-	CV_CAP_PROP_HUE           = C.CV_CAP_PROP_HUE
-	CV_CAP_PROP_GAIN          = C.CV_CAP_PROP_GAIN
-	CV_CAP_PROP_EXPOSURE      = C.CV_CAP_PROP_EXPOSURE
-	CV_CAP_PROP_CONVERT_RGB   = C.CV_CAP_PROP_CONVERT_RGB
-	CV_CAP_PROP_WHITE_BALANCE = C.CV_CAP_PROP_WHITE_BALANCE
-	CV_CAP_PROP_RECTIFICATION = C.CV_CAP_PROP_RECTIFICATION
+	CV_CAP_PROP_POS_MSEC      = int(C.CV_CAP_PROP_POS_MSEC     )
+	CV_CAP_PROP_POS_FRAMES    = int(C.CV_CAP_PROP_POS_FRAMES   )
+	CV_CAP_PROP_POS_AVI_RATIO = int(C.CV_CAP_PROP_POS_AVI_RATIO)
+	CV_CAP_PROP_FRAME_WIDTH   = int(C.CV_CAP_PROP_FRAME_WIDTH  )
+	CV_CAP_PROP_FRAME_HEIGHT  = int(C.CV_CAP_PROP_FRAME_HEIGHT )
+	CV_CAP_PROP_FPS           = int(C.CV_CAP_PROP_FPS          )
+	CV_CAP_PROP_FOURCC        = int(C.CV_CAP_PROP_FOURCC       )
+	CV_CAP_PROP_FRAME_COUNT   = int(C.CV_CAP_PROP_FRAME_COUNT  )
+	CV_CAP_PROP_FORMAT        = int(C.CV_CAP_PROP_FORMAT       )
+	CV_CAP_PROP_MODE          = int(C.CV_CAP_PROP_MODE         )
+	CV_CAP_PROP_BRIGHTNESS    = int(C.CV_CAP_PROP_BRIGHTNESS   )
+	CV_CAP_PROP_CONTRAST      = int(C.CV_CAP_PROP_CONTRAST     )
+	CV_CAP_PROP_SATURATION    = int(C.CV_CAP_PROP_SATURATION   )
+	CV_CAP_PROP_HUE           = int(C.CV_CAP_PROP_HUE          )
+	CV_CAP_PROP_GAIN          = int(C.CV_CAP_PROP_GAIN         )
+	CV_CAP_PROP_EXPOSURE      = int(C.CV_CAP_PROP_EXPOSURE     )
+	CV_CAP_PROP_CONVERT_RGB   = int(C.CV_CAP_PROP_CONVERT_RGB  )
+	CV_CAP_PROP_WHITE_BALANCE = int(C.CV_CAP_PROP_WHITE_BALANCE)
+	CV_CAP_PROP_RECTIFICATION = int(C.CV_CAP_PROP_RECTIFICATION)
 )
 
 /* retrieve or set capture properties */
@@ -530,7 +529,7 @@ func (capture *Capture)SetProperty(property_id int, value float64) int {
 
 // Return the type of the capturer (eg, CV_CAP_V4W, CV_CAP_UNICAP),
 // which is unknown if created with CV_CAP_ANY
-func GetCaptureDomain(capture *Capture) int {
+func (capture *Capture)GetDomain() int {
 	rv := C.cvGetCaptureDomain((*C.CvCapture)(capture))
 	return int(rv)
 }
@@ -548,8 +547,10 @@ func FOURCC(c1, c2, c3, c4 int8) uint32 {
 	return uint32(rv)
 }
 const (
-	CV_FOURCC_PROMPT  = C.CV_FOURCC_PROMPT  /* Open Codec Selection Dialog (Windows only) */
-	CV_FOURCC_DEFAULT = C.CV_FOURCC_DEFAULT /* Use default codec for specified filename (Linux only) */
+	/* Open Codec Selection Dialog (Windows only) */
+	CV_FOURCC_PROMPT  = int(C.CV_FOURCC_PROMPT)
+	/* Use default codec for specified filename (Linux only) */
+	CV_FOURCC_DEFAULT = int(C.CV_FOURCC_DEFAULT)
 )
 
 /* initialize video file writer */
@@ -572,7 +573,7 @@ func (writer *VideoWriter) WriteFrame(image *IplImage) int {
 }
 
 /* close video file writer */
-func (writer *VideoWriter) Release() {
+func (writer *VideoWriter)Release() {
 	writer_c := (*C.CvVideoWriter)(writer)
 	C.cvReleaseVideoWriter(&writer_c)
 }

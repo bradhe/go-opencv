@@ -59,6 +59,12 @@ func ReleaseImage(img *IplImage) {
 }
 //CVAPI(void)  cvReleaseImage( IplImage** image );
 
+func CloneImage(img *IplImage) *IplImage {
+	p := C.cvCloneImage((*C.IplImage)(img))
+	return (*IplImage)(p);
+}
+
+
 /******** matrix iterator: used for n-ary operations on dense arrays *********/
 
 /* Returns width and height of array in elements */
@@ -72,8 +78,11 @@ func GetSizeHeight(img *IplImage) int {
 	w := int(size.height)
 	return w
 }
-//CVAPI(CvSize) cvGetSize( const CvArr* arr );
+func GetSize(img *IplImage) Size {
+	sz := C.cvGetSize(unsafe.Pointer(img))
+	return Size{ int(sz.width), int(sz.height) }
 
+}
 
 /* Copies source array to destination array */
 func Copy(src, dst, mask *IplImage) {
@@ -135,6 +144,22 @@ func Not(src, dst *IplImage) {
 *                                     Drawing                                 *
 \****************************************************************************************/
 
+/* Draws 4-connected, 8-connected or antialiased line segment connecting two points */
+//color Scalar, 
+func Line(image *IplImage, pt1, pt2 Point, color Scalar, thickness, line_type, shift int) {
+	C.cvLine(
+		unsafe.Pointer(image),
+		C.cvPoint(C.int(pt1.X), C.int(pt1.Y)),
+		C.cvPoint(C.int(pt2.X), C.int(pt2.Y)),
+		color.toCvScalar(),
+		C.int(thickness), C.int(line_type), C.int(shift),
+	)
+	//Scalar
+}
+
+//CVAPI(void)  cvLine( CvArr* img, CvPoint pt1, CvPoint pt2,
+//                     CvScalar color, int thickness CV_DEFAULT(1),
+//                     int line_type CV_DEFAULT(8), int shift CV_DEFAULT(0) );
 
 
 /****************************************************************************************\

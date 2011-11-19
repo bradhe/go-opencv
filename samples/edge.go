@@ -11,13 +11,14 @@ import (
 )
 
 func main() {
-	opencv.InitSystem(os.Args)
-
-	image := opencv.LoadImage("./fruits.jpg", opencv.CV_LOAD_IMAGE_COLOR)
+	filename := "./lena.jpg"
+	if len(os.Args) == 2 { filename = os.Args[1] }
+    
+	image := opencv.LoadImage(filename, opencv.CV_LOAD_IMAGE_COLOR)
 	if image == nil {
 		panic("LoadImage fail")
 	}
-	defer opencv.ReleaseImage(image)
+	defer image.Release()
 
 	w := opencv.GetSizeWidth(image)
 	h := opencv.GetSizeHeight(image)

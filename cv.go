@@ -66,8 +66,23 @@ func Canny(image, edges *IplImage, threshold1, threshold2 float64, aperture_size
 //                      double threshold2, int  aperture_size CV_DEFAULT(3) );
 
 
+const (
+	CV_INPAINT_NS = C.CV_INPAINT_NS
+	CV_INPAINT_TELEA = C.CV_INPAINT_TELEA
+)
 
-
+/* Inpaints the selected region in the image */
+func Inpaint(src, inpaint_mask, dst *IplImage, inpaintRange float64, flags int) {
+	C.cvInpaint(
+		unsafe.Pointer(src),
+		unsafe.Pointer(inpaint_mask),
+		unsafe.Pointer(dst),
+		C.double(inpaintRange),
+		C.int(flags),
+	)
+}
+//CVAPI(void) cvInpaint( const CvArr* src, const CvArr* inpaint_mask,
+//                       CvArr* dst, double inpaintRange, int flags );
 
 
 
