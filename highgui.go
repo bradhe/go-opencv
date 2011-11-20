@@ -140,28 +140,37 @@ type Window struct {
 	flags          C.int
 
 	mouseHandle    MouseFunc
+	param          []interface{}
+
 	trackbarHandle map[string]TrackbarFunc
 	trackbarMax    map[string]int
 	trackbarVal    map[string]int
 	trackbarName   map[string](*C.char)
+	trackbarParam  map[string]([]interface{})
 
 	image          *IplImage
 	refCount       int
 }
 
 // mouse callback
-type MouseFunc func(event, x, y, flags int, win *Window)
+type MouseFunc func(event, x, y, flags int, param ...interface{})
 // trackbar callback
-type TrackbarFunc func(pos int, win *Window)
+type TrackbarFunc func(pos int, param ...interface{})
 
 //-----------------------------------------------------------------------------
 // window: create
 //-----------------------------------------------------------------------------
 
+const (
+	CV_WINDOW_AUTOSIZE = C.CV_WINDOW_AUTOSIZE
+)
+
 /* create window */
-func NewWindow(name string, auto_size bool) *Window {
-	win_flags := C.int(0)
-	if auto_size { win_flags = C.CV_WINDOW_AUTOSIZE }
+func NewWindow(name string, flags ...int) *Window {
+	win_flags := C.int(CV_WINDOW_AUTOSIZE)
+	if len(flags) > 0 {
+		win_flags = C.int(flags[0])
+	}
 
 	win := &Window{
 		name:name,
@@ -172,6 +181,7 @@ func NewWindow(name string, auto_size bool) *Window {
 		trackbarMax:make(map[string]int, 50),
 		trackbarVal:make(map[string]int, 50),
 		trackbarName:make(map[string](*C.char), 50),
+		trackbarParam:make(map[string]([]interface{}), 50),
 	}
 	C.cvNamedWindow(win.name_c, win.flags)
 	C.SetMouseCallback(win.name_c)
@@ -228,7 +238,7 @@ func (win *Window)GetWindowName() string {
 /* create trackbar and display it on top of given window, set callback */
 func (win *Window)CreateTrackbar(name string,
 	value, count int,
-	on_changed TrackbarFunc) int  {
+	on_changed TrackbarFunc, param ...interface{}) int  {
 
 	bar_name := C.CString(name)
 
@@ -236,6 +246,13 @@ func (win *Window)CreateTrackbar(name string,
 	win.trackbarMax[name] = count
 	win.trackbarHandle[name] = on_changed
 	win.trackbarName[name] = bar_name
+
+	if len(param) > 0 {
+		win.trackbarParam[name] = param
+	} else {
+		win.trackbarParam[name] = nil
+	}
+	
 
 	rv := C.CreateTrackbar(bar_name, win.name_c,
 		C.int(value), C.int(count))
@@ -251,7 +268,12 @@ func goTrackbarCallback(barName_, winName_ *C.char, pos C.int) {
 		if trackbarHandle, ok := win.trackbarHandle[barName]; ok {
 			runtime.LockOSThread()
 			if trackbarHandle != nil {
-				trackbarHandle(int(pos), win)
+				param := win.trackbarParam[barName]
+				if param != nil {
+					trackbarHandle(int(pos), param...)
+				} else {
+					trackbarHandle(int(pos))
+				}
 			}
 			runtime.UnlockOSThread()
 		}
@@ -298,7 +320,12 @@ const (
 )
 
 /* assign callback for mouse events */
-func (win *Window)SetMouseCallback(on_mouse MouseFunc)  {
+func (win *Window)SetMouseCallback(on_mouse MouseFunc, param ...interface{})  {
+	if len(param) > 0 {
+		win.param = param
+	} else {
+		win.param = nil
+	}
 	win.mouseHandle = on_mouse
 }
 //export goMouseCallback
@@ -308,9 +335,14 @@ func goMouseCallback(name *C.char, event, x, y, flags C.int) {
 		if win.mouseHandle != nil {
 			runtime.LockOSThread()
 			if win.mouseHandle != nil {
-				win.mouseHandle(int(event),
-					int(x), int(y), int(flags), win,
-				)
+				if win.param != nil {
+					win.mouseHandle(int(event),
+						int(x), int(y), int(flags), win.param...)
+
+				} else {
+					win.mouseHandle(int(event),
+						int(x), int(y), int(flags))
+				}
 			}
 			runtime.UnlockOSThread()
 		}
@@ -363,7 +395,11 @@ const (
   using CV_LOAD_IMAGE_ANYCOLOR alone is equivalent to CV_LOAD_IMAGE_UNCHANGED
   unless CV_LOAD_IMAGE_ANYDEPTH is specified images are converted to 8bit
 */
-func LoadImage(filename string, iscolor int) *IplImage {
+func LoadImage(filename string, iscolor_ ...int) *IplImage {
+	iscolor := CV_LOAD_IMAGE_COLOR
+	if len(iscolor_) > 0 {
+		iscolor = iscolor_[0]
+	}
 	rv := C.cvLoadImage(C.CString(filename), C.int(iscolor))
 	return (*IplImage)(rv)
 }

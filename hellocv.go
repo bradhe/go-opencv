@@ -5,33 +5,34 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"opencv"
+	"os"
 )
 
 func main() {
 	filename := "./samples/lena.jpg"
-	if len(os.Args) == 2 { filename = os.Args[1] }
+	if len(os.Args) == 2 {
+		filename = os.Args[1]
+	}
 
-	image := opencv.LoadImage(filename, opencv.CV_LOAD_IMAGE_COLOR)
+	image := opencv.LoadImage(filename)
 	if image == nil {
 		panic("LoadImage fail")
 	}
 	defer image.Release()
 
-	win := opencv.NewWindow("Go-Opencv", true)
+	win := opencv.NewWindow("Go-Opencv")
 	defer win.Destroy()
 
-	win.SetMouseCallback(func(event, x, y, flags int, win *opencv.Window) {
-		fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n", event, x, y, flags)      
+	win.SetMouseCallback(func(event, x, y, flags int, param ...interface{}) {
+		fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n", event, x, y, flags)
 	})
-	win.CreateTrackbar("Thresh", 1, 100, func(pos int, win *opencv.Window) {
+	win.CreateTrackbar("Thresh", 1, 100, func(pos int, param ...interface{}) {
 		fmt.Printf("pos = %d\n", pos)
 	})
-	
-	win.ShowImage(image);
+
+	win.ShowImage(image)
 
 	opencv.WaitKey(0)
 }
-
