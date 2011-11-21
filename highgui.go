@@ -130,8 +130,15 @@ func WaitKey(delay int) int {
 // Window wrapper for go
 //-----------------------------------------------------------------------------
 
-// window list
-var allWindows = make(map[string]*Window, 1000)
+// mouse callback
+type MouseFunc  interface{}
+type MouseFuncA func(event, x, y, flags int)
+type MouseFuncB func(event, x, y, flags int, param ...interface{})
+
+// trackbar callback
+type TrackbarFunc  interface{}
+type TrackbarFuncA func(pos int)
+type TrackbarFuncB func(pos int, param ...interface{})
 
 // named window
 type Window struct {
@@ -152,10 +159,8 @@ type Window struct {
 	refCount       int
 }
 
-// mouse callback
-type MouseFunc func(event, x, y, flags int, param ...interface{})
-// trackbar callback
-type TrackbarFunc func(pos int, param ...interface{})
+// window list
+var allWindows = make(map[string]*Window, 1000)
 
 //-----------------------------------------------------------------------------
 // window: create
@@ -238,13 +243,26 @@ func (win *Window)GetWindowName() string {
 /* create trackbar and display it on top of given window, set callback */
 func (win *Window)CreateTrackbar(name string,
 	value, count int,
-	on_changed TrackbarFunc, param ...interface{}) int  {
+	on_changed TrackbarFunc, param ...interface{}) bool  {
 
 	bar_name := C.CString(name)
 
+	switch f := on_changed.(type) {
+	case TrackbarFuncA:
+		win.trackbarHandle[name] = TrackbarFunc(f)
+	case TrackbarFuncB:
+		win.trackbarHandle[name] = TrackbarFunc(f)
+	case func(pos int):
+		win.trackbarHandle[name] = TrackbarFunc(f)
+	case func(pos int, param ...interface{}):
+		win.trackbarHandle[name] = TrackbarFunc(f)
+	default:
+		panic("unknow func type!")
+	}
+
 	win.trackbarVal[name] = value
 	win.trackbarMax[name] = count
-	win.trackbarHandle[name] = on_changed
+	//win.trackbarHandle[name] = on_changed
 	win.trackbarName[name] = bar_name
 
 	if len(param) > 0 {
@@ -252,30 +270,34 @@ func (win *Window)CreateTrackbar(name string,
 	} else {
 		win.trackbarParam[name] = nil
 	}
-	
 
 	rv := C.CreateTrackbar(bar_name, win.name_c,
 		C.int(value), C.int(count))
-	return int(rv)
+	return bool(rv != 0)
 }
 //export goTrackbarCallback
 func goTrackbarCallback(barName_, winName_ *C.char, pos C.int) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
 	winName := C.GoString(winName_)
 	barName := C.GoString(barName_)
 
-	if win, ok := allWindows[winName]; ok {
-		if trackbarHandle, ok := win.trackbarHandle[barName]; ok {
-			runtime.LockOSThread()
-			if trackbarHandle != nil {
-				param := win.trackbarParam[barName]
-				if param != nil {
-					trackbarHandle(int(pos), param...)
-				} else {
-					trackbarHandle(int(pos))
-				}
-			}
-			runtime.UnlockOSThread()
+	win, ok := allWindows[winName]
+	if !ok { return }
+
+	trackbarHandle, ok := win.trackbarHandle[barName]
+	if !ok { return }
+	if trackbarHandle == nil { return }
+	
+	if fa, ok := trackbarHandle.(func(pos int)); ok {
+		fa(int(pos))
+	} else if fb, ok := trackbarHandle.(func(pos int, param ...interface{})); ok {
+		param := win.trackbarParam[barName]
+		if param != nil {
+			fb(int(pos), param...)
+		} else {
+			fb(int(pos))
 		}
 	}
 }
@@ -321,31 +343,49 @@ const (
 
 /* assign callback for mouse events */
 func (win *Window)SetMouseCallback(on_mouse MouseFunc, param ...interface{})  {
+
+	switch f := on_mouse.(type) {
+	case MouseFuncA:
+		win.mouseHandle = MouseFunc(f)
+	case MouseFuncB:
+		win.mouseHandle = MouseFunc(f)
+	case func(event, x, y, flags int):
+		win.mouseHandle = MouseFunc(f)
+	case func(event, x, y, flags int, param ...interface{}):
+		win.mouseHandle = MouseFunc(f)
+	default:
+		panic("unknow func type!")
+	}
+
 	if len(param) > 0 {
 		win.param = param
 	} else {
 		win.param = nil
 	}
-	win.mouseHandle = on_mouse
 }
 //export goMouseCallback
 func goMouseCallback(name *C.char, event, x, y, flags C.int) {
-	winName := C.GoString(name)
-	if win, ok := allWindows[winName]; ok {
-		if win.mouseHandle != nil {
-			runtime.LockOSThread()
-			if win.mouseHandle != nil {
-				if win.param != nil {
-					win.mouseHandle(int(event),
-						int(x), int(y), int(flags), win.param...)
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
-				} else {
-					win.mouseHandle(int(event),
-						int(x), int(y), int(flags))
-				}
-			}
-			runtime.UnlockOSThread()
+	winName := C.GoString(name)
+	win, ok := allWindows[winName]
+
+	if !ok { return }
+	if win.mouseHandle == nil { return }
+	
+	if fa, ok := win.mouseHandle.(func(event, x, y, flags int)); ok {
+		fa(int(event), int(x), int(y), int(flags))
+		return
+	}
+
+	if fb, ok := win.mouseHandle.(func(event, x, y, flags int, param ...interface{})); ok {
+		if win.param != nil {
+			fb(int(event), int(x), int(y), int(flags), win.param...)
+		} else {
+			fb(int(event), int(x), int(y), int(flags))
 		}
+		return
 	}
 }
 

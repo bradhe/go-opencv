@@ -25,10 +25,12 @@ func main() {
 	win := opencv.NewWindow("Go-Opencv")
 	defer win.Destroy()
 
-	win.SetMouseCallback(func(event, x, y, flags int, param ...interface{}) {
-		fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n", event, x, y, flags)
+	win.SetMouseCallback(func(event, x, y, flags int) {
+		fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n",
+			event, x, y, flags,
+		)
 	})
-	win.CreateTrackbar("Thresh", 1, 100, func(pos int, param ...interface{}) {
+	win.CreateTrackbar("Thresh", 1, 100, func(pos int) {
 		fmt.Printf("pos = %d\n", pos)
 	})
 
@@ -36,3 +38,5 @@ func main() {
 
 	opencv.WaitKey(0)
 }
+
+

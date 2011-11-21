@@ -29,12 +29,9 @@ func main() {
 		"\t\t(before running it, paint something on the image)\n",
 	)
 
-	w := opencv.GetSizeWidth(img0)
-	h := opencv.GetSizeHeight(img0)
-
 	img := img0.Clone()
 	inpainted := img0.Clone()
-	inpaint_mask := opencv.CreateImage(w, h, 8, 1)
+	inpaint_mask := opencv.CreateImage(img0.Width(), img0.Height(), 8, 1)
 
 	opencv.Zero(inpaint_mask)
 	//opencv.Zero( inpainted )
@@ -92,3 +89,5 @@ func main() {
 	}
 	os.Exit(0)
 }
+
+

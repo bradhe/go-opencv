@@ -22,8 +22,8 @@ func main() {
 	}
 	defer image.Release()
 
-	w := opencv.GetSizeWidth(image)
-	h := opencv.GetSizeHeight(image)
+	w := image.Width()
+	h := image.Height()
 
 	// Create the output image
 	cedge := opencv.CreateImage(w, h, opencv.IPL_DEPTH_8U, 3)
@@ -41,7 +41,9 @@ func main() {
 	defer win.Destroy()
 
 	win.SetMouseCallback(func(event, x, y, flags int, param ...interface{}) {
-		fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n", event, x, y, flags)
+		fmt.Printf("event = %d, x = %d, y = %d, flags = %d\n",
+			event, x, y, flags,
+		)
 	})
 
 	win.CreateTrackbar("Thresh", 1, 100, func(pos int, param ...interface{}) {
@@ -72,3 +74,5 @@ func main() {
 
 	os.Exit(0)
 }
+
+
