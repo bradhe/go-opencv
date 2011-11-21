@@ -106,7 +106,6 @@ func init() {
 
 /* this function is used to set some external parameters in case of X Window */
 func initSystem(args []string) int {
-	//if false { return }
 	argc := C.int(len(args))
 	argv := make([]*C.char, len(args))
 	for i := 0; i < len(args); i++ {
@@ -227,7 +226,7 @@ func (win *Window)Move(x, y int)  {
 
 /* get native window handle (HWND in case of Win32 and Widget in case of X Window) */
 func (win *Window)GetHandle() unsafe.Pointer {
-	p := C.cvGetWindowHandle(C.CString(win.name))
+	p := C.cvGetWindowHandle(win.name_c)
 	return unsafe.Pointer(p)
 }
 
@@ -304,17 +303,11 @@ func goTrackbarCallback(barName_, winName_ *C.char, pos C.int) {
 
 /* retrieve or set trackbar position */
 func (win *Window)GetTrackbarPos(name string) (value, max int) {
-	bar_name := C.CString(name)
-	defer C.free(unsafe.Pointer(bar_name))
-
-	rv := C.cvGetTrackbarPos(bar_name, win.name_c)
+	rv := C.cvGetTrackbarPos(win.trackbarName[name], win.name_c)
 	return int(rv), win.trackbarMax[name]
 }
 func (win *Window)SetTrackbarPos(name string, pos int) {
-	bar_name := C.CString(name)
-	defer C.free(unsafe.Pointer(bar_name))
-
-	C.cvSetTrackbarPos(bar_name, win.name_c, C.int(pos))
+	C.cvSetTrackbarPos(win.trackbarName[name], win.name_c, C.int(pos))
 }
 
 //-----------------------------------------------------------------------------
@@ -440,11 +433,17 @@ func LoadImage(filename string, iscolor_ ...int) *IplImage {
 	if len(iscolor_) > 0 {
 		iscolor = iscolor_[0]
 	}
-	rv := C.cvLoadImage(C.CString(filename), C.int(iscolor))
+	name_c := C.CString(filename)
+	defer C.free(unsafe.Pointer(name_c))
+
+	rv := C.cvLoadImage(name_c, C.int(iscolor))
 	return (*IplImage)(rv)
 }
 func LoadImageM(filename string, iscolor int) *Mat {
-	rv := C.cvLoadImageM(C.CString(filename), C.int(iscolor))
+	name_c := C.CString(filename)
+	defer C.free(unsafe.Pointer(name_c))
+
+	rv := C.cvLoadImageM(name_c, C.int(iscolor))
 	return (*Mat)(rv)
 }
 
@@ -456,8 +455,10 @@ const (
 
 /* save image to file */
 func SaveImage(filename string, image *IplImage, params int) int {
+	name_c := C.CString(filename)
+	defer C.free(unsafe.Pointer(name_c))
 	params_c := C.int(params)
-	rv := C.cvSaveImage(C.CString(filename), unsafe.Pointer(image), &params_c)
+	rv := C.cvSaveImage(name_c, unsafe.Pointer(image), &params_c)
 	return int(rv)
 }
 
@@ -474,7 +475,10 @@ func DecodeImageM(buf unsafe.Pointer, iscolor int) *Mat {
 /* encode image and store the result as a byte vector (single-row 8uC1 matrix) */
 func EncodeImage(ext string, image unsafe.Pointer, params int) *Mat {
 	params_c := C.int(params)
-	rv := C.cvEncodeImage(C.CString(ext), (image), &params_c)
+	ext_c := C.CString(ext)
+	defer C.free(unsafe.Pointer(ext_c))
+
+	rv := C.cvEncodeImage(ext_c, (image), &params_c)
 	return (*Mat)(rv)
 }
 
@@ -497,7 +501,9 @@ type Capture C.CvCapture
 
 /* start capturing frames from video file */
 func NewFileCapture(filename string) *Capture {
-	cap := C.cvCreateFileCapture(C.CString(filename))
+	filename_c := C.CString(filename)
+	defer C.free(unsafe.Pointer(filename_c))
+	cap := C.cvCreateFileCapture(filename_c)
 	return (*Capture)(cap)
 }
 
@@ -636,7 +642,10 @@ func NewVideoWriter(filename string,
 	is_color int) *VideoWriter {
 
 	size := C.cvSize(C.int(frame_width), C.int(frame_height))
-	rv := C.cvCreateVideoWriter(C.CString(filename),
+	filename_c := C.CString(filename)
+	defer C.free(unsafe.Pointer(filename_c))
+
+	rv := C.cvCreateVideoWriter(filename_c,
 		C.int(fourcc), C.double(fps), size, C.int(is_color),
 	)
 	return (*VideoWriter)(rv)

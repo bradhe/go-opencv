@@ -22,7 +22,7 @@ func main() {
 	}
 	defer image.Release()
 
-	win := opencv.NewWindow("Go-Opencv")
+	win := opencv.NewWindow("Go-OpenCV")
 	defer win.Destroy()
 
 	win.SetMouseCallback(func(event, x, y, flags int) {
