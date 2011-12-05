@@ -38,6 +38,15 @@ static int CV_IS_IMAGE_(void* img) {
 static int myGetMatType(const CvMat* mat) {
 	return mat->type;
 }
+static int myGetMatNDType(const CvMatND* mat) {
+	return mat->type;
+}
+static int myGetSparseMatType(const CvSparseMat* mat) {
+	return mat->type;
+}
+static int myGetTermCriteriaType(const CvTermCriteria* x) {
+	return x->type;
+}
 
 //-----------------------------------------------------------------------------
 */
@@ -335,29 +344,129 @@ func CV_ARE_TYPE_EQ() bool {
 	return false
 }
 
+func (m *Mat)Init(rows, cols int, type_ int, data unsafe.Pointer) {
+	return
+}
+func (m *Mat)Get(row, col int) float64 {
+	rv := C.cvmGet((*C.CvMat)(m), C.int(row), C.int(col))
+	return float64(rv)
+}
+func (m *Mat)Set(row, col int, value float64) {
+	C.cvmSet((*C.CvMat)(m), C.int(row), C.int(col), C.double(value))
+}
+
+func IplDepth(type_ int) int {
+	rv := C.cvIplDepth(C.int(type_))
+	return int(rv)
+}
+
 /****************************************************************************************\
 *                       Multi-dimensional dense array (CvMatND)                          *
 \****************************************************************************************/
 
+const (
+	CV_MATND_MAGIC_VAL = C.CV_MATND_MAGIC_VAL
+	CV_TYPE_NAME_MATND = C.CV_TYPE_NAME_MATND
+
+	CV_MAX_DIM         = C.CV_MAX_DIM
+	CV_MAX_DIM_HEAP    = C.CV_MAX_DIM_HEAP
+)
+
 type MatND C.CvMatND
+
+func (m *MatND)Type() int {
+	rv := C.myGetMatNDType((*C.CvMatND)(m))
+	return int(rv)
+}
+func (m *MatND)Dims() int {
+	rv := m.dims
+	return int(rv)
+}
 
 /****************************************************************************************\
 *                      Multi-dimensional sparse array (CvSparseMat)                      *
 \****************************************************************************************/
 
+const (
+	CV_SPARSE_MAT_MAGIC_VAL = C.CV_SPARSE_MAT_MAGIC_VAL
+	CV_TYPE_NAME_SPARSE_MAT = C.CV_TYPE_NAME_SPARSE_MAT
+)
+
 type SparseMat C.CvSparseMat
+
+func (m *SparseMat)Type() int {
+	rv := C.myGetSparseMatType((*C.CvSparseMat)(m))
+	return int(rv)
+}
+func (m *SparseMat)Dims() int {
+	rv := m.dims
+	return int(rv)
+}
 
 /**************** iteration through a sparse array *****************/
 
 type SparseNode C.CvSparseNode
+
+func (node *SparseNode)HashVal() uint32 {
+	rv := node.hashval
+	return uint32(rv)
+}
+func (node *SparseNode)Next() *SparseNode {
+	rv := node.next
+	return (*SparseNode)(rv)
+}
+
 type SparseMatIterator C.CvSparseMatIterator
+
+func (node *SparseMatIterator)Mat() *SparseMat {
+	rv := node.mat
+	return (*SparseMat)(rv)
+}
+func (node *SparseMatIterator)Node() *SparseNode {
+	rv := node.node
+	return (*SparseNode)(rv)
+}
+func (node *SparseMatIterator)CurIdx() int {
+	rv := node.curidx
+	return (int)(rv)
+}
 
 /****************************************************************************************\
 *                                         Histogram                                      *
 \****************************************************************************************/
 
 type HistType C.CvHistType
+
+const (
+	CV_HIST_MAGIC_VAL = C.CV_HIST_MAGIC_VAL
+	CV_HIST_UNIFORM_FLAG = C.CV_HIST_UNIFORM_FLAG
+
+	/* indicates whether bin ranges are set already or not */
+	CV_HIST_RANGES_FLAG = C.CV_HIST_RANGES_FLAG
+
+	CV_HIST_ARRAY = C.CV_HIST_ARRAY
+	CV_HIST_SPARSE = C.CV_HIST_SPARSE
+	CV_HIST_TREE = C.CV_HIST_TREE
+
+	/* should be used as a parameter only,
+	   it turns to CV_HIST_UNIFORM_FLAG of hist->type */
+	CV_HIST_UNIFORM = C.CV_HIST_UNIFORM
+)
+
 type Histogram C.CvHistogram
+
+func CV_IS_HIST() bool {
+	return false
+}
+func CV_IS_UNIFORM_HIST() bool {
+	return false
+}
+func CV_IS_SPARSE_HIST() bool {
+	return false
+}
+func CV_HIST_HAS_RANGES() bool {
+	return false
+}
 
 /****************************************************************************************\
 *                      Other supplementary data type definitions                         *
@@ -367,6 +476,12 @@ type Histogram C.CvHistogram
 
 type Rect C.CvRect
 
+func (r *Rect)Init(x, y, w, h int) {
+	r.x = C.int(x)
+	r.y = C.int(y)
+	r.width = C.int(w)
+	r.height = C.int(h)
+}
 func (r *Rect)X() int {
 	r_c := (*C.CvRect)(r)
 	return int(r_c.x)
@@ -401,7 +516,31 @@ func (roi *IplROI)ToRect() Rect {
 
 /*********************************** CvTermCriteria *************************************/
 
+const (
+	CV_TERMCRIT_ITER = C.CV_TERMCRIT_ITER
+	CV_TERMCRIT_NUMBER = C.CV_TERMCRIT_NUMBER
+	CV_TERMCRIT_EPS = C.CV_TERMCRIT_EPS
+)
+
 type TermCriteria C.CvTermCriteria
+
+func (x *TermCriteria)Init(type_, max_iter int, epsilon float64) {
+	rv := C.cvTermCriteria(C.int(type_), C.int(max_iter), C.double(epsilon))
+	(*x) = (TermCriteria)(rv)
+}
+
+func (x *TermCriteria)Type() int {
+	rv := C.myGetTermCriteriaType((*C.CvTermCriteria)(x))
+	return int(rv)
+}
+func (x *TermCriteria)MaxIter() int {
+	rv := x.max_iter
+	return int(rv)
+}
+func (x *TermCriteria)Epsilon() float64 {
+	rv := x.epsilon
+	return float64(rv)
+}
 
 /******************************* CvPoint and variants ***********************************/
 
@@ -420,15 +559,16 @@ type Point3D32f struct {
 	Z float32
 }
 
-//type Point2D32f C.CvPoint2D32f
 
-
-//type Point3D32f C.CvPoint3D32f
-
-
-
-type Point2D64f C.CvPoint2D64f
-type Point3D64f C.CvPoint3D64f
+type Point2D64f struct {
+	X float64
+	Y float64
+}
+type Point3D64f struct {
+	X float64
+	Y float64
+	Z float64
+}
 
 /******************************** CvSize's & CvBox **************************************/
 
@@ -437,15 +577,26 @@ type Size struct {
 	Height int
 }
 
-type Size2D32f C.CvSize2D32f
+type Size2D32f struct {
+	Width  float32
+	Height float32
+}
 
-type Box2D C.CvBox2D
+type Box2D struct {
+	center Point2D32f
+	size   Size2D32f
+	angle  float32
+}
 
 type LineIterator C.CvLineIterator
 
 /************************************* CvSlice ******************************************/
 
 type Slice C.CvSlice
+
+const (
+	CV_WHOLE_SEQ_END_INDEX = C.CV_WHOLE_SEQ_END_INDEX
+)
 
 /************************************* CvScalar *****************************************/
 
@@ -457,57 +608,71 @@ func ScalarAll(val0 float64) Scalar {
 }
 
 /****************************************************************************************\
-
-
 *                                   Dynamic Data structures                              *
-
-
 \****************************************************************************************/
 
 /******************************** Memory storage ****************************************/
 
-type MemBlock C.CvMemBlock
+type MemBlock      C.CvMemBlock
+type MemStorage    C.CvMemStorage
 type MemStoragePos C.CvMemStoragePos
 
 /*********************************** Sequence *******************************************/
 
 type SeqBlock C.CvSeqBlock
+type Seq      C.CvSeq
 
 /*************************************** Set ********************************************/
 
+type Set C.CvSet
+
 /************************************* Graph ********************************************/
+
+type GraphEdge  C.CvGraphEdge
+type GraphVtx   C.CvGraphVtx
+
+type GraphVtx2D C.CvGraphVtx2D
+type Graph      C.CvGraph
 
 /*********************************** Chain/Countour *************************************/
 
+type Chain   C.CvChain
+type Contour C.CvContour
+
 /****************************************************************************************\
-
-
 *                                    Sequence types                                      *
-
-
 \****************************************************************************************/
 
 /****************************************************************************************/
 /*                            Sequence writer & reader                                  */
 /****************************************************************************************/
 
+type SeqWriter C.CvSeqWriter
+type SeqReader C.CvSeqReader
+
 /****************************************************************************************/
 /*                                Operations on sequences                               */
 /****************************************************************************************/
 
 /****************************************************************************************\
-
-
 *             Data structures for persistence (a.k.a serialization) functionality        *
-
-
 \****************************************************************************************/
 
+/* "black box" file storage */
+type FileStorage C.CvFileStorage
+
+/* Storage flags: */
+const (
+	CV_STORAGE_READ = C.CV_STORAGE_READ
+	CV_STORAGE_WRITE = C.CV_STORAGE_WRITE
+	CV_STORAGE_WRITE_TEXT = C.CV_STORAGE_WRITE_TEXT
+	CV_STORAGE_WRITE_BINARY = C.CV_STORAGE_WRITE_BINARY
+	CV_STORAGE_APPEND = C.CV_STORAGE_APPEND
+)
+
+type AttrList C.CvAttrList
+
 /*****************************************************************************\
-
-
 *                                 --- END ---                                 *
-
-
 \*****************************************************************************/
 

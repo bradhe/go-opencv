@@ -76,11 +76,11 @@ func main() {
 		key := opencv.WaitKey(20)
 		if key == 27 {
 			os.Exit(0)
-		} else if key == int("r"[0]) {
+		} else if key == 'r' {
 			opencv.Zero(inpaint_mask)
 			opencv.Copy(img0, img, nil)
 			win.ShowImage(img)
-		} else if key == int("i"[0]) || key == int("\n"[0]) {
+		} else if key == 'i' || key == '\n' {
 			opencv.Inpaint(img, inpaint_mask, inpainted, 3,
 				opencv.CV_INPAINT_TELEA,
 			)
