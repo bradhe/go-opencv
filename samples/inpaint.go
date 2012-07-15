@@ -6,12 +6,12 @@ package main
 
 import (
 	"fmt"
-	"opencv"
+	"go-opencv.googlecode.com/svn/trunk/opencv"
 	"os"
 )
 
 func main() {
-	filename := "./fruits.jpg"
+	filename := "../images/fruits.jpg"
 	if len(os.Args) == 2 {
 		filename = os.Args[1]
 	}

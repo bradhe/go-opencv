@@ -14,7 +14,7 @@ package opencv
 //-----------------------------------------------------------------------------
 
 // version
-const char* CV_VERSION_ = CV_VERSION;
+// const char* CV_VERSION_ = CV_VERSION;
 
 //-----------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ const (
 )
 
 var (
-	CV_VERSION = C.GoString(C.CV_VERSION_)
+	//CV_VERSION = C.GoString(C.CV_VERSION_)
 )
 
 //-----------------------------------------------------------------------------

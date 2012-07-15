@@ -4,100 +4,17 @@
 
 package opencv
 
-/*
-#cgo LDFLAGS: -lhighgui
-
-#include <opencv/highgui.h>
-#include <stdlib.h>
-#include <string.h>
-
-//-----------------------------------------------------------------------------
-// trackbar
-//-----------------------------------------------------------------------------
-
-// trackbar data
-struct TrackbarUserdata {
-	schar* win_name;
-	schar* bar_name;
-	int value;
-};
-static struct TrackbarUserdata *trackbar_list[1000];
-static int trackbar_list_len = 0;
-
-static void trackbarCallback(int pos, void* userdata)
-{
-	extern void goTrackbarCallback(schar* pbarName0, schar* winName1, int pos);
-
-	struct TrackbarUserdata *arg = (struct TrackbarUserdata*)userdata;
-	goTrackbarCallback(arg->bar_name, arg->win_name, pos);
-}
-static int CreateTrackbar(
-	char* trackbar_name, char* window_name,
-	int value, int count
-)
-{
-	struct TrackbarUserdata *userdata = malloc(sizeof(*userdata));
-	trackbar_list[trackbar_list_len++] = userdata;
-
-	userdata->win_name = (schar*)window_name;
-	userdata->bar_name = (schar*)trackbar_name;
-	userdata->value = value;
-
-	return cvCreateTrackbar2(trackbar_name, window_name,
-		&(userdata->value), count,
-		trackbarCallback, userdata
-	);
-}
-static void DestroyTrackbar(char* trackbar_name, char* window_name)
-{
-	int i;
-	for(i = 0; i < trackbar_list_len; ++i) {
-		if(strcmp((char*)trackbar_list[i]->win_name, window_name)) continue;
-		if(strcmp((char*)trackbar_list[i]->bar_name, trackbar_name)) continue;
-
-		free(trackbar_list[i]);
-		trackbar_list[i] = trackbar_list[--trackbar_list_len];
-		break;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// mouse callback
-//-----------------------------------------------------------------------------
-
-static void mouseCallback(int event, int x, int y, int flags, void* param)
-{
-	extern void goMouseCallback(schar* name, int event, int x, int y, int flags);
-
-	schar* name = (schar*)param;
-	goMouseCallback(name, event, x, y, flags);
-}
-static void SetMouseCallback(const char* window_name)
-{
-	cvSetMouseCallback(window_name, mouseCallback, (void*)window_name);
-}
-
-//-----------------------------------------------------------------------------
-
-// video writer args
-unsigned CV_FOURCC_(int c1, int c2, int c3, int c4) {
-	return (unsigned)CV_FOURCC(c1,c2,c3,c4);
-}
-
-//-----------------------------------------------------------------------------
-*/
+//#include "opencv.h"
+//#cgo pkg-config: opencv
 import "C"
 import (
 	"runtime"
 	"unsafe"
-	"fmt"
-//	"errors"
+	_ "fmt"
 )
 
 func init() {
-	if false {
-		fmt.Printf("highgui.go init")
-	}
+
 }
 
 /*****************************************************************************\
@@ -124,6 +41,7 @@ func WaitKey(delay int) int {
 	key := C.cvWaitKey(C.int(delay))
 	return int(key)
 }
+
 
 //-----------------------------------------------------------------------------
 // Window wrapper for go
@@ -188,7 +106,7 @@ func NewWindow(name string, flags ...int) *Window {
 		trackbarParam:make(map[string]([]interface{}), 50),
 	}
 	C.cvNamedWindow(win.name_c, win.flags)
-	C.SetMouseCallback(win.name_c)
+	C.GoOpenCV_SetMouseCallback(win.name_c)
 
 	allWindows[win.name] = win
 	return win
@@ -235,6 +153,7 @@ func (win *Window)GetWindowName() string {
 	return win.name
 }
 
+
 //-----------------------------------------------------------------------------
 // window: track bar
 //-----------------------------------------------------------------------------
@@ -270,10 +189,14 @@ func (win *Window)CreateTrackbar(name string,
 		win.trackbarParam[name] = nil
 	}
 
-	rv := C.CreateTrackbar(bar_name, win.name_c,
+	rv := C.GoOpenCV_CreateTrackbar(bar_name, win.name_c,
 		C.int(value), C.int(count))
 	return bool(rv != 0)
 }
+func destroyTrackbar(barName_, winName_ *C.char) {
+	C.GoOpenCV_DestroyTrackbar(barName_, winName_);
+}
+
 //export goTrackbarCallback
 func goTrackbarCallback(barName_, winName_ *C.char, pos C.int) {
 	runtime.LockOSThread()
@@ -309,6 +232,7 @@ func (win *Window)GetTrackbarPos(name string) (value, max int) {
 func (win *Window)SetTrackbarPos(name string, pos int) {
 	C.cvSetTrackbarPos(win.trackbarName[name], win.name_c, C.int(pos))
 }
+
 
 //-----------------------------------------------------------------------------
 // window: mouse callback
@@ -382,6 +306,7 @@ func goMouseCallback(name *C.char, event, x, y, flags C.int) {
 	}
 }
 
+
 //-----------------------------------------------------------------------------
 // window: destroy
 //-----------------------------------------------------------------------------
@@ -392,7 +317,7 @@ func (win *Window)Destroy()  {
 	delete(allWindows, win.name)
 
 	for _, bar_name := range win.trackbarName {
-		C.DestroyTrackbar(bar_name, win.name_c)
+		C.GoOpenCV_DestroyTrackbar(bar_name, win.name_c)
 		C.free(unsafe.Pointer(bar_name))
 	}
 	C.free(unsafe.Pointer(win.name_c))
@@ -625,7 +550,7 @@ type VideoWriter C.CvVideoWriter
 
 // Prototype for CV_FOURCC so that swig can generate wrapper without mixing up the define
 func FOURCC(c1, c2, c3, c4 int8) uint32 {
-	rv := C.CV_FOURCC_(C.int(c1),C.int(c2),C.int(c3),C.int(c4))
+	rv := C.GoOpenCV_FOURCC_(C.int(c1),C.int(c2),C.int(c3),C.int(c4))
 	return uint32(rv)
 }
 const (
@@ -666,7 +591,5 @@ func (writer *VideoWriter)Release() {
 /*****************************************************************************\
 *                                 --- END ---                                 *
 \*****************************************************************************/
-
-
 
 
