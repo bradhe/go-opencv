@@ -6,8 +6,9 @@ package main
 
 import (
 	"fmt"
-	"go-opencv.googlecode.com/svn/trunk/opencv"
 	"os"
+
+	"code.google.com/p/go-opencv/trunk/opencv"
 )
 
 func main() {
