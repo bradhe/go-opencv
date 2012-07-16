@@ -4,14 +4,10 @@
 
 package opencv
 
-/*
-#cgo LDFLAGS: -lcv
-
-#include <opencv/cv.h>
-#include <stdlib.h>
-#include <string.h>
-
-*/
+//#include "opencv.h"
+//#cgo linux  pkg-config: opencv
+//#cgo darwin pkg-config: opencv
+//#cgo windows LDFLAGS: -lopencv_core242.dll -lopencv_imgproc242.dll -lopencv_photo242.dll -lopencv_highgui242.dll -lstdc++
 import "C"
 import (
 	//"errors"

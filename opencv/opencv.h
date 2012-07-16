@@ -1,12 +1,28 @@
 // Copyright 2011 <chaishushan@gmail.com>. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+//
+// OpenCV Homepage: http://code.opencv.org
 
 #ifndef _GO_OPENCV_BINDING_H_
 #define _GO_OPENCV_BINDING_H_
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#if defined(__linux) || defined(__linux__)
+//  OpenCV 2.0.x
+#   include <opencv/cv.h>
+#   include <opencv/highgui.h>
+#elif defined(WIN32) || defined(_WIN32)
+//  OpenCV 2.4.x
+#   include <opencv/cv.h>
+#   include <opencv/highgui.h>
+#   include <opencv2/photo/photo_c.h>
+#   include <opencv2/imgproc/imgproc_c.h>
+#else   // Mac OS X ?
+//  OpenCV 2.2.x ?
+#   include <opencv/cv.h>
+#   include <opencv/highgui.h>
+#   include <opencv2/imgproc/imgproc_c.h>
+#endif
 
 // Trackbar
 int GoOpenCV_CreateTrackbar(

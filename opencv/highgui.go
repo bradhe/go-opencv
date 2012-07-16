@@ -5,7 +5,9 @@
 package opencv
 
 //#include "opencv.h"
-//#cgo pkg-config: opencv
+//#cgo linux  pkg-config: opencv
+//#cgo darwin pkg-config: opencv
+//#cgo windows LDFLAGS: -lopencv_core242.dll -lopencv_imgproc242.dll -lopencv_photo242.dll -lopencv_highgui242.dll -lstdc++
 import "C"
 import (
 	"runtime"
@@ -516,7 +518,7 @@ const (
 	CV_CAP_PROP_GAIN          = int(C.CV_CAP_PROP_GAIN         )
 	CV_CAP_PROP_EXPOSURE      = int(C.CV_CAP_PROP_EXPOSURE     )
 	CV_CAP_PROP_CONVERT_RGB   = int(C.CV_CAP_PROP_CONVERT_RGB  )
-	CV_CAP_PROP_WHITE_BALANCE = int(C.CV_CAP_PROP_WHITE_BALANCE)
+	// CV_CAP_PROP_WHITE_BALANCE = int(C.CV_CAP_PROP_WHITE_BALANCE)
 	CV_CAP_PROP_RECTIFICATION = int(C.CV_CAP_PROP_RECTIFICATION)
 )
 
@@ -557,7 +559,7 @@ const (
 	/* Open Codec Selection Dialog (Windows only) */
 	CV_FOURCC_PROMPT  = int(C.CV_FOURCC_PROMPT)
 	/* Use default codec for specified filename (Linux only) */
-	CV_FOURCC_DEFAULT = int(C.CV_FOURCC_DEFAULT)
+	// CV_FOURCC_DEFAULT = int(C.CV_FOURCC_DEFAULT)
 )
 
 /* initialize video file writer */
