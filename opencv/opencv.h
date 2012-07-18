@@ -18,9 +18,10 @@
 #   include <opencv2/photo/photo_c.h>
 #   include <opencv2/imgproc/imgproc_c.h>
 #else   // Mac OS X ?
-//  OpenCV 2.2.x ?
+//  OpenCV 2.4.x ?
 #   include <opencv/cv.h>
 #   include <opencv/highgui.h>
+#   include <opencv2/photo/photo_c.h>
 #   include <opencv2/imgproc/imgproc_c.h>
 #endif
 
