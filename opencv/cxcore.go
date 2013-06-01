@@ -442,10 +442,17 @@ func Line(image *IplImage, pt1, pt2 Point, color Scalar, thickness, line_type, s
 /****************************************************************************************\
 *                                    Data Persistence                         *
 \****************************************************************************************/
+func NewMemStorage() (*MemStorage) {
+	mem := C.cvCreateMemStorage(0)
+	return (*MemStorage)(mem)
+}
 
+func (self *MemStorage) Clear() {
+	c_mem := (*C.CvMemStorage)(self)
+	C.cvClearMemStorage(c_mem)
+}
 
-
-
-
-
-
+func (self *MemStorage) Release() {
+	c_mem := (*C.CvMemStorage)(self)
+	C.cvReleaseMemStorage(&c_mem)
+}
