@@ -1,5 +1,10 @@
 # Go bindings for OpenCV
 
+This is a mirror of the [original OpenCV bindings for
+Go](https://code.google.com/p/go-opencv/) project hosted on Google Code. I
+wanted to contribute to it and believe that Github's model for
+contributing/sharing code is better so I mirrored it here.
+
 ## Installing OpenCV from Git
 
 Someone should really make a script out of this.
