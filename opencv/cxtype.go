@@ -551,6 +551,10 @@ type Point struct {
 	Y int
 }
 
+func (self Point) AsCvPoint() (C.CvPoint) {
+	return C.cvPoint(C.int(self.X), C.int(self.Y))
+}
+
 type Point2D32f struct {
 	X float32
 	Y float32
@@ -607,6 +611,17 @@ type Scalar C.CvScalar
 func ScalarAll(val0 float64) Scalar {
 	rv := C.cvScalarAll(C.double(val0))
 	return (Scalar)(rv)
+}
+
+func NewScalar(b, g, r float64) Scalar {
+	var floats [4]C.double
+
+	floats[0] = C.double(b)
+	floats[1] = C.double(g)
+	floats[2] = C.double(r)
+	floats[0] = C.double(1)
+
+	return Scalar{floats}
 }
 
 /****************************************************************************************\
