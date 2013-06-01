@@ -19,7 +19,6 @@ func init() {
 
 const (
 	CV_BGR2GRAY = C.CV_BGR2GRAY
-
 	CV_BLUR = C.CV_BLUR
 )
 
@@ -31,6 +30,7 @@ func Smooth(src, dst *IplImage, smoothtype,
 		C.int(param1), C.int(param2), C.double(param3), C.double(param4),
 	)
 }
+
 //CVAPI(void) cvSmooth( const CvArr* src, CvArr* dst,
 //                      int smoothtype CV_DEFAULT(CV_GAUSSIAN),
 //                      int param1 CV_DEFAULT(3),
