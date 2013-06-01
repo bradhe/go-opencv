@@ -370,6 +370,17 @@ func Zero(img *IplImage) {
 //CVAPI(void)  cvSetZero( CvArr* arr );
 //#define cvZero  cvSetZero
 
+func Rectangle(image *IplImage, pt1, pt2 Point, color Scalar, thickness, lineType, shift int) {
+	C.cvRectangle(
+		unsafe.Pointer(image),
+		pt1.AsCvPoint(),
+		pt2.AsCvPoint(),
+		C.CvScalar(color),
+		C.int(thickness),
+		C.int(lineType),
+		C.int(shift))
+}
+
 
 /****************************************************************************************\
 *                   Arithmetic, logic and comparison operations               *
