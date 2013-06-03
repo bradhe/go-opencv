@@ -697,6 +697,14 @@ const (
 
 type HaarClassifierCascade C.CvHaarClassifierCascade
 
+/*********************************** Misc *************************************/
+
+// TODO: Figure out where this actually f'ing belongs...!
+
+const (
+	CV_RGB2GRAY = C.CV_RGB2GRAY
+)
+
 /*****************************************************************************\
 *                                 --- END ---                                 *
 \*****************************************************************************/
