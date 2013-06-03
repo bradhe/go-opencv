@@ -370,6 +370,19 @@ func Zero(img *IplImage) {
 //CVAPI(void)  cvSetZero( CvArr* arr );
 //#define cvZero  cvSetZero
 
+func Pow(src, dst *IplImage, pow float64) {
+	C.cvPow(unsafe.Pointer(src), unsafe.Pointer(dst), C.double(pow))
+}
+
+func ConvertScaleAbs(src, dst *IplImage, scale, shift float64) {
+	C.cvConvertScaleAbs(
+		unsafe.Pointer(src),
+		unsafe.Pointer(dst),
+		C.double(scale),
+		C.double(shift),
+	)
+}
+
 func Rectangle(image *IplImage, pt1, pt2 Point, color Scalar, thickness, lineType, shift int) {
 	C.cvRectangle(
 		unsafe.Pointer(image),
