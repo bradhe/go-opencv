@@ -619,7 +619,7 @@ func NewScalar(b, g, r float64) Scalar {
 	floats[0] = C.double(b)
 	floats[1] = C.double(g)
 	floats[2] = C.double(r)
-	floats[0] = C.double(1)
+	floats[3] = C.double(1)
 
 	return Scalar{floats}
 }
