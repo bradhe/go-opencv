@@ -381,6 +381,18 @@ func Rectangle(image *IplImage, pt1, pt2 Point, color Scalar, thickness, lineTyp
 		C.int(shift))
 }
 
+func Circle(image *IplImage, center Point, radius int, color Scalar, thickness, lineType, shift int) {
+	C.cvCircle(
+		unsafe.Pointer(image),
+		center.AsCvPoint(),
+		C.int(radius),
+		C.CvScalar(color),
+		C.int(thickness),
+		C.int(lineType),
+		C.int(shift),
+	)
+}
+
 
 /****************************************************************************************\
 *                   Arithmetic, logic and comparison operations               *
