@@ -102,7 +102,8 @@ func (self *HaarClassifierCascade) DetectObjects(image *IplImage, storage *MemSt
 		C.int(minNeighbors),
 		C.int(flags),
 		C.cvSize(C.int(minSize.Width), C.int(minSize.Height)),
-		C.cvSize(C.int(maxSize.Width), C.int(maxSize.Height)))
+		C.cvSize(C.int(maxSize.Width), C.int(maxSize.Height)),
+	)
 
 	seq := (*Seq)(c_seq)
 
@@ -114,6 +115,11 @@ func (self *HaarClassifierCascade) DetectObjects(image *IplImage, storage *MemSt
 	})
 
 	return arr
+}
+
+func (self *HaarClassifierCascade) Release() {
+	c_self := unsafe.Pointer(self)
+	C.cvRelease(&c_self)
 }
 
 
